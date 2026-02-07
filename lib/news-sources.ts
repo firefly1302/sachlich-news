@@ -2,42 +2,57 @@ import { NewsFeed } from './types';
 
 // RSS Feeds für verschiedene Kategorien
 export const NEWS_FEEDS: NewsFeed[] = [
-  // Zürich
+  // Zürich - nutzen Schweiz-Feeds mit Zürich-Bezug
   {
-    url: 'https://www.20min.ch/rss/rss.tmpl?get=1&type=channel&params=id=10000050',
+    url: 'https://www.nzz.ch/zuerich.rss',
     category: 'zuerich',
-    name: '20min Zürich'
+    name: 'NZZ Zürich'
+  },
+  {
+    url: 'https://www.blick.ch/schweiz/zuerich/rss.xml',
+    category: 'zuerich',
+    name: 'Blick Zürich'
   },
 
   // Schweiz
-  {
-    url: 'https://www.20min.ch/rss/rss.tmpl?get=1&type=channel&params=id=10000002',
-    category: 'schweiz',
-    name: '20min Schweiz'
-  },
   {
     url: 'https://www.srf.ch/news/bnf/rss/1646',
     category: 'schweiz',
     name: 'SRF News Schweiz'
   },
+  {
+    url: 'https://www.blick.ch/schweiz/rss.xml',
+    category: 'schweiz',
+    name: 'Blick Schweiz'
+  },
+  {
+    url: 'https://www.nzz.ch/schweiz.rss',
+    category: 'schweiz',
+    name: 'NZZ Schweiz'
+  },
 
   // International
-  {
-    url: 'https://www.20min.ch/rss/rss.tmpl?get=1&type=channel&params=id=10000003',
-    category: 'international',
-    name: '20min International'
-  },
   {
     url: 'https://www.srf.ch/news/bnf/rss/1645',
     category: 'international',
     name: 'SRF News International'
   },
+  {
+    url: 'https://www.blick.ch/ausland/rss.xml',
+    category: 'international',
+    name: 'Blick Ausland'
+  },
+  {
+    url: 'https://www.nzz.ch/international.rss',
+    category: 'international',
+    name: 'NZZ International'
+  },
 
   // People/Unterhaltung
   {
-    url: 'https://www.20min.ch/rss/rss.tmpl?get=1&type=channel&params=id=10000006',
+    url: 'https://www.blick.ch/people-tv/rss.xml',
     category: 'people',
-    name: '20min People'
+    name: 'Blick People & TV'
   },
   {
     url: 'https://www.blick.ch/life/rss.xml',
