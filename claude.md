@@ -7,8 +7,9 @@ Sachlich.News ist eine Nachrichten-Website, die News aus der Schweiz und der Wel
 ## Konzept
 
 - **Zielgruppe**: Menschen die informiert sein möchten, aber emotionale Belastung durch Sensationalismus vermeiden wollen
-- **Lösung**: AI-gestütztes Umschreiben von News-Headlines und Zusammenfassungen ins Sachliche
-- **Quellen**: RSS-Feeds von 20min.ch, SRF.ch, Blick.ch
+- **Lösung**: AI-gestütztes Umschreiben von News-Headlines, Zusammenfassungen und vollständigen Artikeln ins Sachliche
+- **Quellen**: RSS-Feeds von SRF.ch, Blick.ch, NZZ.ch
+- **Besonderheit**: User bleiben auf Sachlich.News - keine Weiterleitung zu dramatischen Original-Seiten
 
 ## Technische Architektur
 
@@ -27,10 +28,11 @@ sachlich-news/
 │   ├── api/
 │   │   ├── news/          # API für News-Fetching & AI-Rewriting
 │   │   └── rewrite/       # API für vollständiges Artikel-Rewriting
+│   ├── article/[id]/      # Artikel-Detailseite (sachlich aufbereitet)
 │   ├── components/
 │   │   ├── Header.tsx     # Haupt-Header mit Logo
 │   │   ├── CategoryNav.tsx # Navigation zwischen Kategorien
-│   │   └── NewsCard.tsx   # Einzelne News-Karte
+│   │   └── NewsCard.tsx   # Einzelne News-Karte (mit Bild)
 │   ├── zuerich/           # Zürich News-Seite
 │   ├── schweiz/           # Schweiz News-Seite
 │   ├── international/     # International News-Seite
@@ -38,7 +40,7 @@ sachlich-news/
 │   └── page.tsx           # Homepage (alle News)
 ├── lib/
 │   ├── types.ts           # TypeScript Definitionen
-│   ├── news-sources.ts    # RSS Feed URLs
+│   ├── news-sources.ts    # RSS Feed URLs (SRF, Blick, NZZ)
 │   ├── news-fetcher.ts    # RSS Fetching Logik
 │   └── ai-rewriter.ts     # OpenAI Integration
 └── .env.local             # Environment Variables (nicht in Git!)
@@ -47,21 +49,28 @@ sachlich-news/
 ## Features
 
 ### 1. Kategorien
-- **Zürich**: Lokale News aus Zürich
-- **Schweiz**: Schweizer News (ohne alle Details aus anderen Kantonen)
-- **International**: Wichtige Weltnachrichten
-- **People**: Prominente und Unterhaltung
+- **Zürich**: Lokale News aus Zürich (NZZ Zürich, Blick Zürich)
+- **Schweiz**: Schweizer News (SRF, Blick, NZZ)
+- **International**: Weltnachrichten (SRF, Blick, NZZ)
+- **People**: Prominente und Unterhaltung (Blick People & Life)
 
-### 2. AI-Rewriting
+### 2. Interne Artikel-Detailseiten
+- **Keine externe Weiterleitung**: User bleiben auf Sachlich.News
+- **Vollständiges AI-Rewriting**: Gesamter Artikel wird sachlich umgeschrieben
+- **Bilder-Anzeige**: News-Bilder werden (falls vorhanden) sachlich präsentiert
+- **Optional Original-Link**: Am Ende des Artikels für Quellenprüfung
+
+### 3. AI-Rewriting (GPT-4o-mini)
 - **Headlines**: Dramatische Titel werden sachlich umformuliert
 - **Zusammenfassungen**: 2-3 Sätze mit nur den wichtigsten Fakten
+- **Vollständige Artikel**: On-Demand Umschreiben beim Klick auf Artikel
 - **Prompt-Strategie**: Fokus auf Wer, Was, Wann, Wo, Warum - ohne emotionale Sprache
 
-### 3. News-Fetching
-- RSS-Feeds werden ausgelesen
+### 4. News-Fetching
+- RSS-Feeds von SRF, Blick und NZZ werden ausgelesen
 - 10 neueste Artikel pro Feed
 - Sortierung nach Datum (neueste zuerst)
-- Original-Quelle wird verlinkt
+- Automatische Bild-Extraktion aus RSS-Feeds
 
 ## AI-Prompting-Strategie
 
@@ -98,21 +107,30 @@ OPENAI_API_KEY=sk-...  # OpenAI API Key für GPT-4o-mini
 4. Environment Variable `OPENAI_API_KEY` hinzufügen
 5. Deploy
 
+## Aktuelle Features (Live auf sachlich-news.vercel.app)
+
+✅ Sachliche News-Übersicht mit Bildern
+✅ 4 Kategorien: Zürich, Schweiz, International, People
+✅ Interne Artikel-Detailseiten (kein Verlassen der Seite)
+✅ AI-Rewriting von Headlines, Summaries und vollständigen Artikeln
+✅ Responsive Design für Mobile, Tablet und Desktop
+✅ RSS-Feeds von SRF, Blick und NZZ
+
 ## Zukünftige Verbesserungen
 
 ### Potenzielle Features:
-- **Caching-Layer**: Datenbank für umgeschriebene Artikel (Supabase/Vercel Postgres)
+- **Caching-Layer**: Datenbank für umgeschriebene Artikel (vermeidet wiederholte API-Calls)
 - **Auto-Refresh**: Cron Job alle 30-60 Min für automatische News-Updates
-- **Favoriten**: User können Artikel speichern
-- **RSS Feed**: Eigener RSS-Feed mit sachlichen News
-- **Dark Mode**: Für angenehmeres Lesen
-- **Notifications**: Push-Benachrichtigungen für wichtige News
-- **Mehr Quellen**: NZZ, Tagesanzeiger, etc.
+- **Favoriten/Lesezeichen**: User können Artikel für später speichern
+- **RSS Feed**: Eigener RSS-Feed mit sachlichen News zum Abonnieren
+- **Dark Mode**: Für angenehmeres Lesen am Abend
+- **Lesefortschritt**: Markierung von gelesenen Artikeln
+- **Mehr Quellen**: Tagesanzeiger, Watson, etc.
 
 ### Performance-Optimierungen:
-- Server-Side Rendering mit Caching
-- Image-Optimization für News-Bilder
-- Lazy Loading für bessere Performance
+- Server-Side Rendering mit Caching (schnellere Ladezeiten)
+- Edge Caching für häufig aufgerufene Artikel
+- Bildkomprimierung und Lazy Loading
 
 ## Entwickelt mit Claude Code
 
