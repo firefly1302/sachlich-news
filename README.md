@@ -1,36 +1,53 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Sachlich.News
 
-## Getting Started
+Eine Nachrichten-Website die sachlich informiert - ohne Drama, Sensationalismus und emotionale Überschriften.
 
-First, run the development server:
+## Features
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+- Automatisches Laden von News aus Schweizer Quellen (20min, SRF, Blick)
+- KI-gestütztes Umschreiben der Headlines und Zusammenfassungen ins Sachliche
+- Kategorien: Zürich, Schweiz, International, People
+- Responsive Design mit Tailwind CSS
+- Optimiert für Vercel Deployment
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Setup
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+1. **Dependencies installieren:**
+   ```bash
+   npm install
+   ```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+2. **OpenAI API Key hinzufügen:**
+   - Gehe zu https://platform.openai.com/api-keys
+   - Erstelle einen neuen API Key
+   - Kopiere den Key in `.env.local`:
+     ```
+     OPENAI_API_KEY=sk-your-key-here
+     ```
 
-## Learn More
+3. **Development Server starten:**
+   ```bash
+   npm run dev
+   ```
 
-To learn more about Next.js, take a look at the following resources:
+   Öffne http://localhost:3000
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Deployment auf Vercel
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+1. Pushe das Projekt zu GitHub
+2. Verbinde GitHub-Repo mit Vercel
+3. Füge Environment Variable hinzu: `OPENAI_API_KEY`
+4. Deploy!
 
-## Deploy on Vercel
+## Kosten
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- OpenAI GPT-4o-mini: ~0.10-0.30 CHF/Tag (je nach Nutzung)
+- Vercel: Dein bestehendes Abo sollte reichen
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Technologie
+
+- **Next.js 15** mit App Router
+- **TypeScript**
+- **Tailwind CSS**
+- **OpenAI GPT-4o-mini** für sachliches Umschreiben
+- **RSS Parser** für News-Feeds
