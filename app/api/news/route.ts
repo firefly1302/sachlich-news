@@ -9,31 +9,51 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
     const category = searchParams.get('category');
 
+    console.log(`\n🔵 Fetching news for category: ${category || 'all'}`);
+
     // News holen
     const articles = category
       ? await fetchNewsByCategory(category)
       : await fetchAllNews();
 
-    // Headlines und Summaries sachlich umschreiben
-    const rewrittenArticles = await Promise.all(
-      articles.map(async (article) => {
-        const rewritten = await rewriteHeadlineAndSummary(
-          article.title,
-          article.summary
-        );
+    console.log(`📰 Fetched ${articles.length} articles`);
 
-        return {
-          ...article,
-          title: rewritten.title,
-          summary: rewritten.summary,
-          publishedAt: article.publishedAt.toISOString(), // JSON-serializable
-        };
+    // Headlines und Summaries sachlich umschreiben
+    console.log('🤖 Starting AI rewriting for all articles...');
+    const rewrittenArticles = await Promise.all(
+      articles.map(async (article, index) => {
+        try {
+          console.log(`[${index + 1}/${articles.length}] Rewriting: ${article.title.substring(0, 50)}...`);
+
+          const rewritten = await rewriteHeadlineAndSummary(
+            article.title,
+            article.summary
+          );
+
+          return {
+            ...article,
+            title: rewritten.title,
+            summary: rewritten.summary,
+            publishedAt: article.publishedAt.toISOString(), // JSON-serializable
+          };
+        } catch (articleError) {
+          console.error(`❌ Failed to rewrite article ${index + 1}:`, articleError);
+          // Return original if rewriting fails
+          return {
+            ...article,
+            publishedAt: article.publishedAt.toISOString(),
+          };
+        }
       })
     );
 
+    console.log(`✅ Successfully processed ${rewrittenArticles.length} articles\n`);
     return NextResponse.json({ articles: rewrittenArticles });
   } catch (error) {
-    console.error('Fehler beim Laden der News:', error);
+    console.error('❌ CRITICAL ERROR beim Laden der News:', error);
+    if (error instanceof Error) {
+      console.error('Error Stack:', error.stack);
+    }
     return NextResponse.json(
       { error: 'Fehler beim Laden der News' },
       { status: 500 }
