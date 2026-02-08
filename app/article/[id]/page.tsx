@@ -28,17 +28,36 @@ export default function ArticlePage() {
       }
 
       try {
-        const response = await fetch('/api/rewrite', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ content: summary }),
-        });
+        // Für Weltwoche/Nebelspalter: Vollständiges Scraping + Umschreiben
+        const needsScraping = source === 'Weltwoche' || source === 'Nebelspalter';
 
-        if (response.ok) {
-          const data = await response.json();
-          setRewrittenContent(data.content);
+        if (needsScraping && originalUrl) {
+          const response = await fetch('/api/scrape', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ url: originalUrl }),
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            setRewrittenContent(data.content);
+          } else {
+            setRewrittenContent(summary);
+          }
         } else {
-          setRewrittenContent(summary);
+          // Normale Artikel: Nur Summary umschreiben
+          const response = await fetch('/api/rewrite', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ content: summary }),
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            setRewrittenContent(data.content);
+          } else {
+            setRewrittenContent(summary);
+          }
         }
       } catch (error) {
         console.error('Fehler beim Umschreiben:', error);
@@ -49,7 +68,7 @@ export default function ArticlePage() {
     }
 
     rewriteContent();
-  }, [summary]);
+  }, [summary, source, originalUrl]);
 
   const timeAgo = publishedAt
     ? formatDistanceToNow(new Date(publishedAt), {
@@ -97,7 +116,9 @@ export default function ArticlePage() {
             <div className="flex items-center justify-center py-12">
               <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
               <span className="ml-3 text-gray-600">
-                Artikel wird sachlich aufbereitet...
+                {source === 'Weltwoche' || source === 'Nebelspalter'
+                  ? 'Vollständiger Artikel wird geladen und sachlich aufbereitet...'
+                  : 'Artikel wird sachlich aufbereitet...'}
               </span>
             </div>
           ) : (

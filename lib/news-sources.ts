@@ -70,5 +70,16 @@ export const NEWS_FEEDS: NewsFeed[] = [
     url: 'https://www.zeitpunkt.ch/rss.xml',
     category: 'alternativ',
     name: 'Zeitpunkt'
+  },
+  // Weltwoche und Nebelspalter werden via Web-Scraping geladen (kein RSS)
+  {
+    url: 'SCRAPE:weltwoche',
+    category: 'alternativ',
+    name: 'Weltwoche'
+  },
+  {
+    url: 'SCRAPE:nebelspalter',
+    category: 'alternativ',
+    name: 'Nebelspalter'
   }
 ];

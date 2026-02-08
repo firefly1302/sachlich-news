@@ -1,11 +1,24 @@
 import Parser from 'rss-parser';
 import { NewsArticle, NewsFeed } from './types';
 import { NEWS_FEEDS } from './news-sources';
+import { scrapeWeltwocheHeadlines, scrapeNebelspalterHeadlines } from './web-scraper';
 
 const parser = new Parser();
 
 export async function fetchNewsFromFeed(feed: NewsFeed): Promise<NewsArticle[]> {
   try {
+    // Web-Scraping für Weltwoche und Nebelspalter
+    if (feed.url.startsWith('SCRAPE:')) {
+      const source = feed.url.replace('SCRAPE:', '');
+      if (source === 'weltwoche') {
+        return await scrapeWeltwocheHeadlines();
+      } else if (source === 'nebelspalter') {
+        return await scrapeNebelspalterHeadlines();
+      }
+      return [];
+    }
+
+    // Normales RSS-Fetching
     const rssFeed = await parser.parseURL(feed.url);
 
     const articles: NewsArticle[] = (rssFeed.items || []).slice(0, 10).map((item, index) => {
