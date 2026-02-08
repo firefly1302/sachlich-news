@@ -9,6 +9,7 @@ const categories = [
   { name: 'Schweiz', href: '/schweiz' },
   { name: 'International', href: '/international' },
   { name: 'People', href: '/people' },
+  { name: 'Alternativ', href: '/alternativ' },
 ];
 
 export default function CategoryNav() {

@@ -1,4 +1,4 @@
-export type NewsCategory = 'people' | 'zuerich' | 'schweiz' | 'international';
+export type NewsCategory = 'people' | 'zuerich' | 'schweiz' | 'international' | 'alternativ';
 
 export interface NewsArticle {
   id: string;

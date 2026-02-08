@@ -58,5 +58,17 @@ export const NEWS_FEEDS: NewsFeed[] = [
     url: 'https://www.blick.ch/life/rss.xml',
     category: 'people',
     name: 'Blick Life'
+  },
+
+  // Alternative Medien (unabhängig & kritisch)
+  {
+    url: 'https://www.infosperber.ch/feed/',
+    category: 'alternativ',
+    name: 'Infosperber'
+  },
+  {
+    url: 'https://www.zeitpunkt.ch/rss.xml',
+    category: 'alternativ',
+    name: 'Zeitpunkt'
   }
 ];
