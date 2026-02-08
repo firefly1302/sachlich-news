@@ -176,7 +176,7 @@ export async function scrapeArticle(url: string): Promise<string> {
 // Weltwoche Homepage scrapen für Headlines
 export async function scrapeWeltwocheHeadlines(): Promise<NewsArticle[]> {
   try {
-    const response = await axios.get('https://weltwoche.ch/ausgabe/aktuelle-ausgabe/', {
+    const response = await axios.get('https://weltwoche.ch/', {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36',
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
@@ -186,34 +186,24 @@ export async function scrapeWeltwocheHeadlines(): Promise<NewsArticle[]> {
 
     const $ = cheerio.load(response.data);
     const articles: NewsArticle[] = [];
+    const seenUrls = new Set<string>();
 
-    // Erweiterte Selektoren für Weltwoche
-    $('article, .teaser, .post-item, h2 a, h3 a').slice(0, 15).each((index, el) => {
+    // Weltwoche verwendet /daily/ Links für aktuelle Artikel
+    $('a[href*="/daily/"]').each((index, el) => {
       const $el = $(el);
-      let title = '';
-      let link = '';
-      let summary = '';
+      const title = $el.text().trim();
+      const href = $el.attr('href') || '';
 
-      if ($el.is('a')) {
-        // Link-Element
-        title = $el.text().trim();
-        link = $el.attr('href') || '';
-      } else {
-        // Article/Teaser-Element
-        title = $el.find('h2, h3, .title, .headline').first().text().trim();
-        link = $el.find('a').first().attr('href') || '';
-        summary = $el.find('.excerpt, .summary, .teaser-text, p').first().text().trim();
-      }
+      // Filter: Nur richtige Artikel (mindestens 30 Zeichen Titel)
+      if (title.length > 30 && title.length < 200 && href) {
+        const fullUrl = href.startsWith('http') ? href : `https://weltwoche.ch${href}`;
 
-      if (title && link && title.length > 10) {
-        const fullUrl = link.startsWith('http') ? link : `https://weltwoche.ch${link}`;
-
-        // Verhindere Duplikate
-        if (!articles.some(a => a.originalUrl === fullUrl)) {
+        if (!seenUrls.has(fullUrl)) {
+          seenUrls.add(fullUrl);
           articles.push({
-            id: `weltwoche-${Date.now()}-${index}`,
+            id: `weltwoche-${Date.now()}-${articles.length}`,
             title,
-            summary: summary || title,
+            summary: title,
             category: 'alternativ',
             source: 'Weltwoche',
             publishedAt: new Date(),
@@ -234,7 +224,8 @@ export async function scrapeWeltwocheHeadlines(): Promise<NewsArticle[]> {
 // Nebelspalter Homepage scrapen für Headlines
 export async function scrapeNebelspalterHeadlines(): Promise<NewsArticle[]> {
   try {
-    const response = await axios.get('https://www.nebelspalter.ch/themen/politik', {
+    // Verwende die Themen-Seite mit Artikelliste
+    const response = await axios.get('https://www.nebelspalter.ch/themen/alle-themen', {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36',
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
@@ -244,22 +235,24 @@ export async function scrapeNebelspalterHeadlines(): Promise<NewsArticle[]> {
 
     const $ = cheerio.load(response.data);
     const articles: NewsArticle[] = [];
+    const seenUrls = new Set<string>();
 
-    // Erweiterte Selektoren für Nebelspalter
-    $('a[href*="/themen/"], h2 a, h3 a, .article-link').slice(0, 15).each((index, el) => {
+    // Suche alle Links die zu Artikeln führen
+    $('a').each((index, el) => {
       const $el = $(el);
-      const title = $el.text().trim() || $el.find('h2, h3').text().trim();
-      const link = $el.attr('href') || $el.find('a').first().attr('href') || '';
+      const title = $el.text().trim();
+      const href = $el.attr('href') || '';
 
-      if (title && link && title.length > 10 && link.includes('/themen/')) {
-        const fullUrl = link.startsWith('http') ? link : `https://www.nebelspalter.ch${link}`;
+      // Nebelspalter Artikel haben meist längere Titel
+      if (title.length > 30 && title.length < 200 && href.includes('/themen/')) {
+        const fullUrl = href.startsWith('http') ? href : `https://www.nebelspalter.ch${href}`;
 
-        // Verhindere Duplikate
-        if (!articles.some(a => a.originalUrl === fullUrl)) {
+        if (!seenUrls.has(fullUrl) && !fullUrl.includes('?filter=')) {
+          seenUrls.add(fullUrl);
           articles.push({
-            id: `nebelspalter-${Date.now()}-${index}`,
+            id: `nebelspalter-${Date.now()}-${articles.length}`,
             title,
-            summary: title, // Kein Summary verfügbar
+            summary: title,
             category: 'alternativ',
             source: 'Nebelspalter',
             publishedAt: new Date(),
