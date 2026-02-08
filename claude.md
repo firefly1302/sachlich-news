@@ -134,11 +134,13 @@ OPENAI_API_KEY=sk-...  # OpenAI API Key für GPT-4o-mini
 ✅ Sachliche News-Übersicht mit Bildern
 ✅ 5 Kategorien: Zürich, Schweiz, International, People, Alternativ
 ✅ Interne Artikel-Detailseiten (kein Verlassen der Seite)
-✅ AI-Rewriting von Headlines, Summaries und vollständigen Artikeln
+✅ **Vollständige Artikel-Scraping für ALLE Quellen** (nicht nur Summaries)
+✅ AI-Rewriting von vollständigen Artikeln mit GPT-4o-mini
 ✅ Responsive Design für Mobile, Tablet und Desktop
-✅ RSS-Feeds von SRF, Blick, NZZ, Infosperber, Zeitpunkt
-✅ Web-Scraping mit Paywall-Umgehung für Weltwoche & Nebelspalter (private Nutzung)
-✅ Vollständige Artikel-Scraping für alternative Medien ohne RSS-Feeds
+✅ **News-Quellen:**
+  - RSS: SRF, Blick, NZZ, Infosperber, Zeitpunkt, Schweizer Monat
+  - Web-Scraping: Weltwoche, Nebelspalter (mit Paywall-Umgehung, private Nutzung)
+✅ Jeder Artikel wird vollständig gescrapt und sachlich umgeschrieben (5-15 Sek)
 
 ## Zukünftige Verbesserungen
 
