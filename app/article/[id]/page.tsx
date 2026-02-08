@@ -22,16 +22,14 @@ export default function ArticlePage() {
 
   useEffect(() => {
     async function rewriteContent() {
-      if (!summary) {
+      if (!summary && !originalUrl) {
         setLoading(false);
         return;
       }
 
       try {
-        // Für Weltwoche/Nebelspalter: Vollständiges Scraping + Umschreiben
-        const needsScraping = source === 'Weltwoche' || source === 'Nebelspalter';
-
-        if (needsScraping && originalUrl) {
+        // ALLE Artikel: Vollständiges Scraping + Umschreiben für mehr Inhalt
+        if (originalUrl) {
           const response = await fetch('/api/scrape', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -42,25 +40,26 @@ export default function ArticlePage() {
             const data = await response.json();
             setRewrittenContent(data.content);
           } else {
-            setRewrittenContent(summary);
+            // Fallback: Nur Summary umschreiben
+            const fallbackResponse = await fetch('/api/rewrite', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ content: summary }),
+            });
+            if (fallbackResponse.ok) {
+              const fallbackData = await fallbackResponse.json();
+              setRewrittenContent(fallbackData.content);
+            } else {
+              setRewrittenContent(summary);
+            }
           }
         } else {
-          // Normale Artikel: Nur Summary umschreiben
-          const response = await fetch('/api/rewrite', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ content: summary }),
-          });
-
-          if (response.ok) {
-            const data = await response.json();
-            setRewrittenContent(data.content);
-          } else {
-            setRewrittenContent(summary);
-          }
+          // Kein Link: Nur Summary
+          setRewrittenContent(summary);
+          setLoading(false);
         }
       } catch (error) {
-        console.error('Fehler beim Umschreiben:', error);
+        console.error('Fehler beim Laden:', error);
         setRewrittenContent(summary);
       } finally {
         setLoading(false);
@@ -68,7 +67,7 @@ export default function ArticlePage() {
     }
 
     rewriteContent();
-  }, [summary, source, originalUrl]);
+  }, [summary, originalUrl]);
 
   const timeAgo = publishedAt
     ? formatDistanceToNow(new Date(publishedAt), {
@@ -116,9 +115,7 @@ export default function ArticlePage() {
             <div className="flex items-center justify-center py-12">
               <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
               <span className="ml-3 text-gray-600">
-                {source === 'Weltwoche' || source === 'Nebelspalter'
-                  ? 'Vollständiger Artikel wird geladen und sachlich aufbereitet...'
-                  : 'Artikel wird sachlich aufbereitet...'}
+                Vollständiger Artikel wird geladen und sachlich aufbereitet...
               </span>
             </div>
           ) : (

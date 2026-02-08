@@ -109,32 +109,77 @@ export async function scrapeArticle(url: string): Promise<string> {
     return scrapeNebelspalter(url);
   }
 
-  // Generischer Fallback
+  // Generischer Scraper für alle anderen Schweizer News-Seiten
   try {
-    const html = await bypassPaywall(url);
+    // Für Paywall-Seiten: 12ft.io verwenden, sonst direkt
+    const useBypass = url.includes('nzz.ch') || url.includes('weltwoche') || url.includes('nebelspalter');
+    const html = useBypass ? await bypassPaywall(url) : await axios.get(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36',
+      },
+      timeout: 15000,
+    }).then(res => res.data);
+
     const $ = cheerio.load(html);
 
     let content = '';
-    $('article p, .article-content p, .entry-content p').each((_, el) => {
-      const text = $(el).text().trim();
-      if (text.length > 30) {
-        content += text + '\n\n';
-      }
-    });
 
-    return content.trim() || 'Artikel konnte nicht vollständig geladen werden.';
+    // Erweiterte Selektoren für verschiedene Schweizer News-Seiten
+    const selectors = [
+      // SRF
+      'article .article-content p',
+      '.article__lead',
+      '.article__text p',
+      // Blick
+      '.article__body p',
+      '.article-text p',
+      '.post-content p',
+      // NZZ
+      '.article__body p',
+      '.articlebody p',
+      // Infosperber
+      '.entry-content p',
+      '.article-text p',
+      // Zeitpunkt
+      '.field--name-body p',
+      '.article-body p',
+      // Schweizer Monat
+      '.entry-content p',
+      '.post-content p',
+      // Generisch
+      'article p',
+      '.content p',
+      'main p',
+    ];
+
+    for (const selector of selectors) {
+      const elements = $(selector);
+      if (elements.length > 0) {
+        elements.each((_, el) => {
+          const text = $(el).text().trim();
+          // Filtere kurze Texte und Metadaten aus
+          if (text.length > 50 && !text.includes('©') && !text.includes('Quelle:')) {
+            content += text + '\n\n';
+          }
+        });
+        if (content.length > 300) break; // Genug Content gefunden
+      }
+    }
+
+    return content.trim() || 'Artikel konnte nicht vollständig geladen werden. Möglicherweise blockiert die Website das automatische Laden.';
   } catch (error) {
     console.error('Fehler beim Scrapen:', error);
-    return 'Fehler beim Laden des Artikels.';
+    return 'Fehler beim Laden des Artikels. Die Quelle ist möglicherweise nicht verfügbar.';
   }
 }
 
 // Weltwoche Homepage scrapen für Headlines
 export async function scrapeWeltwocheHeadlines(): Promise<NewsArticle[]> {
   try {
-    const response = await axios.get('https://weltwoche.ch/', {
+    const response = await axios.get('https://weltwoche.ch/ausgabe/aktuelle-ausgabe/', {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
       },
       timeout: 15000,
     });
@@ -142,28 +187,44 @@ export async function scrapeWeltwocheHeadlines(): Promise<NewsArticle[]> {
     const $ = cheerio.load(response.data);
     const articles: NewsArticle[] = [];
 
-    // Suche nach Artikel-Links und Titeln
-    $('article, .article-item, .post').slice(0, 10).each((index, el) => {
+    // Erweiterte Selektoren für Weltwoche
+    $('article, .teaser, .post-item, h2 a, h3 a').slice(0, 15).each((index, el) => {
       const $el = $(el);
-      const title = $el.find('h2, h3, .title, .article-title').first().text().trim();
-      const link = $el.find('a').first().attr('href');
-      const summary = $el.find('.excerpt, .summary, p').first().text().trim();
+      let title = '';
+      let link = '';
+      let summary = '';
 
-      if (title && link) {
+      if ($el.is('a')) {
+        // Link-Element
+        title = $el.text().trim();
+        link = $el.attr('href') || '';
+      } else {
+        // Article/Teaser-Element
+        title = $el.find('h2, h3, .title, .headline').first().text().trim();
+        link = $el.find('a').first().attr('href') || '';
+        summary = $el.find('.excerpt, .summary, .teaser-text, p').first().text().trim();
+      }
+
+      if (title && link && title.length > 10) {
         const fullUrl = link.startsWith('http') ? link : `https://weltwoche.ch${link}`;
-        articles.push({
-          id: `weltwoche-${Date.now()}-${index}`,
-          title,
-          summary: summary || title,
-          category: 'alternativ',
-          source: 'Weltwoche',
-          publishedAt: new Date(),
-          originalUrl: fullUrl,
-        });
+
+        // Verhindere Duplikate
+        if (!articles.some(a => a.originalUrl === fullUrl)) {
+          articles.push({
+            id: `weltwoche-${Date.now()}-${index}`,
+            title,
+            summary: summary || title,
+            category: 'alternativ',
+            source: 'Weltwoche',
+            publishedAt: new Date(),
+            originalUrl: fullUrl,
+          });
+        }
       }
     });
 
-    return articles;
+    console.log(`Weltwoche: ${articles.length} Artikel gefunden`);
+    return articles.slice(0, 10); // Max 10 Artikel
   } catch (error) {
     console.error('Fehler beim Scrapen von Weltwoche Headlines:', error);
     return [];
@@ -173,9 +234,10 @@ export async function scrapeWeltwocheHeadlines(): Promise<NewsArticle[]> {
 // Nebelspalter Homepage scrapen für Headlines
 export async function scrapeNebelspalterHeadlines(): Promise<NewsArticle[]> {
   try {
-    const response = await axios.get('https://www.nebelspalter.ch/', {
+    const response = await axios.get('https://www.nebelspalter.ch/themen/politik', {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
       },
       timeout: 15000,
     });
@@ -183,28 +245,32 @@ export async function scrapeNebelspalterHeadlines(): Promise<NewsArticle[]> {
     const $ = cheerio.load(response.data);
     const articles: NewsArticle[] = [];
 
-    // Suche nach Artikel-Links
-    $('article, .article, .post-item').slice(0, 10).each((index, el) => {
+    // Erweiterte Selektoren für Nebelspalter
+    $('a[href*="/themen/"], h2 a, h3 a, .article-link').slice(0, 15).each((index, el) => {
       const $el = $(el);
-      const title = $el.find('h2, h3, .title').first().text().trim();
-      const link = $el.find('a').first().attr('href');
-      const summary = $el.find('.excerpt, .teaser, p').first().text().trim();
+      const title = $el.text().trim() || $el.find('h2, h3').text().trim();
+      const link = $el.attr('href') || $el.find('a').first().attr('href') || '';
 
-      if (title && link) {
+      if (title && link && title.length > 10 && link.includes('/themen/')) {
         const fullUrl = link.startsWith('http') ? link : `https://www.nebelspalter.ch${link}`;
-        articles.push({
-          id: `nebelspalter-${Date.now()}-${index}`,
-          title,
-          summary: summary || title,
-          category: 'alternativ',
-          source: 'Nebelspalter',
-          publishedAt: new Date(),
-          originalUrl: fullUrl,
-        });
+
+        // Verhindere Duplikate
+        if (!articles.some(a => a.originalUrl === fullUrl)) {
+          articles.push({
+            id: `nebelspalter-${Date.now()}-${index}`,
+            title,
+            summary: title, // Kein Summary verfügbar
+            category: 'alternativ',
+            source: 'Nebelspalter',
+            publishedAt: new Date(),
+            originalUrl: fullUrl,
+          });
+        }
       }
     });
 
-    return articles;
+    console.log(`Nebelspalter: ${articles.length} Artikel gefunden`);
+    return articles.slice(0, 10); // Max 10 Artikel
   } catch (error) {
     console.error('Fehler beim Scrapen von Nebelspalter Headlines:', error);
     return [];

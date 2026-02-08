@@ -71,6 +71,11 @@ export const NEWS_FEEDS: NewsFeed[] = [
     category: 'alternativ',
     name: 'Zeitpunkt'
   },
+  {
+    url: 'https://schweizermonat.ch/feed/',
+    category: 'alternativ',
+    name: 'Schweizer Monat'
+  },
   // Weltwoche und Nebelspalter werden via Web-Scraping geladen (kein RSS)
   {
     url: 'SCRAPE:weltwoche',
