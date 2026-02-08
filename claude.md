@@ -8,7 +8,9 @@ Sachlich.News ist eine Nachrichten-Website, die News aus der Schweiz und der Wel
 
 - **Zielgruppe**: Menschen die informiert sein möchten, aber emotionale Belastung durch Sensationalismus vermeiden wollen
 - **Lösung**: AI-gestütztes Umschreiben von News-Headlines, Zusammenfassungen und vollständigen Artikeln ins Sachliche
-- **Quellen**: RSS-Feeds von SRF.ch, Blick.ch, NZZ.ch
+- **Quellen**:
+  - RSS-Feeds: SRF.ch, Blick.ch, NZZ.ch, Infosperber, Zeitpunkt
+  - Web-Scraping mit Paywall-Umgehung: Weltwoche, Nebelspalter (nur für private Nutzung)
 - **Besonderheit**: User bleiben auf Sachlich.News - keine Weiterleitung zu dramatischen Original-Seiten
 
 ## Technische Architektur
@@ -17,7 +19,10 @@ Sachlich.News ist eine Nachrichten-Website, die News aus der Schweiz und der Wel
 - **Frontend**: Next.js 15 (App Router), React, TypeScript
 - **Styling**: Tailwind CSS
 - **AI**: OpenAI GPT-4o-mini für sachliches Umschreiben
-- **News-Quellen**: RSS-Parser für Schweizer Medien
+- **News-Quellen**:
+  - RSS-Parser für Schweizer Medien
+  - Cheerio + Axios für Web-Scraping
+  - 12ft.io für Paywall-Umgehung (private Nutzung)
 - **Deployment**: Vercel
 
 ### Projektstruktur
@@ -27,7 +32,8 @@ sachlich-news/
 ├── app/
 │   ├── api/
 │   │   ├── news/          # API für News-Fetching & AI-Rewriting
-│   │   └── rewrite/       # API für vollständiges Artikel-Rewriting
+│   │   ├── rewrite/       # API für vollständiges Artikel-Rewriting
+│   │   └── scrape/        # API für Web-Scraping mit Paywall-Umgehung
 │   ├── article/[id]/      # Artikel-Detailseite (sachlich aufbereitet)
 │   ├── components/
 │   │   ├── Header.tsx     # Haupt-Header mit Logo
@@ -37,11 +43,13 @@ sachlich-news/
 │   ├── schweiz/           # Schweiz News-Seite
 │   ├── international/     # International News-Seite
 │   ├── people/            # People News-Seite
+│   ├── alternativ/        # Alternative Medien-Seite
 │   └── page.tsx           # Homepage (alle News)
 ├── lib/
 │   ├── types.ts           # TypeScript Definitionen
-│   ├── news-sources.ts    # RSS Feed URLs (SRF, Blick, NZZ)
+│   ├── news-sources.ts    # RSS Feed URLs + Scraping-Targets
 │   ├── news-fetcher.ts    # RSS Fetching Logik
+│   ├── web-scraper.ts     # Web-Scraping für Weltwoche/Nebelspalter
 │   └── ai-rewriter.ts     # OpenAI Integration
 └── .env.local             # Environment Variables (nicht in Git!)
 ```
@@ -53,6 +61,7 @@ sachlich-news/
 - **Schweiz**: Schweizer News (SRF, Blick, NZZ)
 - **International**: Weltnachrichten (SRF, Blick, NZZ)
 - **People**: Prominente und Unterhaltung (Blick People & Life)
+- **Alternativ**: Alternative/kritische Medien (Infosperber, Zeitpunkt, Weltwoche, Nebelspalter)
 
 ### 2. Interne Artikel-Detailseiten
 - **Keine externe Weiterleitung**: User bleiben auf Sachlich.News
@@ -67,10 +76,18 @@ sachlich-news/
 - **Prompt-Strategie**: Fokus auf Wer, Was, Wann, Wo, Warum - ohne emotionale Sprache
 
 ### 4. News-Fetching
-- RSS-Feeds von SRF, Blick und NZZ werden ausgelesen
+- **RSS-Feeds**: SRF, Blick, NZZ, Infosperber, Zeitpunkt
+- **Web-Scraping**: Weltwoche und Nebelspalter (mit Paywall-Umgehung über 12ft.io)
 - 10 neueste Artikel pro Feed
 - Sortierung nach Datum (neueste zuerst)
 - Automatische Bild-Extraktion aus RSS-Feeds
+
+### 5. Web-Scraping & Paywall-Umgehung
+- **12ft.io Integration**: Umgehung von Paywalls für private Nutzung
+- **Cheerio HTML-Parsing**: Extraktion von Artikel-Inhalten
+- **Intelligente Selektoren**: Automatische Erkennung verschiedener Website-Strukturen
+- **Vollständige Artikel**: Bei Weltwoche/Nebelspalter wird der komplette Artikel gescrapt und umgeschrieben
+- **WICHTIG**: Nur für private Familien-Nutzung gedacht, nicht öffentlich teilen
 
 ## AI-Prompting-Strategie
 
@@ -85,13 +102,18 @@ Fokus auf:
 - Schweizer Hochdeutsch
 - Informativ aber nicht belastend
 
-## Kosten-Optimierung
+## Kosten-Optimierung & Erwartete Kosten
 
 - **GPT-4o-mini statt Claude**: ~10x günstiger
 - **Headlines + Summary umschreiben**: ~5 Cent für 20 Artikel
-- **On-Demand Rewriting**: Volle Artikel nur bei Klick
-- **Caching**: Umgeschriebene Artikel werden gespeichert
-- **Erwartete Kosten**: 0.10-0.30 CHF/Tag
+- **Vollständige Artikel (RSS)**: ~0.07 Rappen pro Artikel
+- **Web-Scraping + Umschreiben**: ~0.07 Rappen pro vollständigem Artikel
+- **On-Demand Rewriting**: Volle Artikel nur bei Klick, nicht vorher
+- **Erwartete Kosten**:
+  - Bei normaler Nutzung: 0.20-0.50 CHF/Monat
+  - Bei intensiver Nutzung (50+ Artikel/Tag): ~1-2 CHF/Monat
+
+**Hinweis**: Web-Scraping verbraucht etwas mehr API-Tokens da vollständige Artikel umgeschrieben werden, aber Kosten bleiben überschaubar.
 
 ## Environment Variables
 
@@ -110,11 +132,13 @@ OPENAI_API_KEY=sk-...  # OpenAI API Key für GPT-4o-mini
 ## Aktuelle Features (Live auf sachlich-news.vercel.app)
 
 ✅ Sachliche News-Übersicht mit Bildern
-✅ 4 Kategorien: Zürich, Schweiz, International, People
+✅ 5 Kategorien: Zürich, Schweiz, International, People, Alternativ
 ✅ Interne Artikel-Detailseiten (kein Verlassen der Seite)
 ✅ AI-Rewriting von Headlines, Summaries und vollständigen Artikeln
 ✅ Responsive Design für Mobile, Tablet und Desktop
-✅ RSS-Feeds von SRF, Blick und NZZ
+✅ RSS-Feeds von SRF, Blick, NZZ, Infosperber, Zeitpunkt
+✅ Web-Scraping mit Paywall-Umgehung für Weltwoche & Nebelspalter (private Nutzung)
+✅ Vollständige Artikel-Scraping für alternative Medien ohne RSS-Feeds
 
 ## Zukünftige Verbesserungen
 
