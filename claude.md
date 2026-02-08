@@ -91,16 +91,32 @@ sachlich-news/
 
 ## AI-Prompting-Strategie
 
-Der AI-Prompt entfernt aktiv:
+Der AI-Prompt verwendet EXTREM STRIKTE Regeln für Sachlichkeit:
+
+**Entfernt werden:**
 - Dramatische Worte: "schockierend", "erschütternd", "tragisch", "Horror"
 - Emotionale Sprache und Übertreibungen
-- Unnötige Details die nur schockieren sollen
+- **Sensible medizinische/persönliche Details** (Hormone, Geschlecht, Krankheiten, Verletzungen)
+- Kontroverse Aussagen oder polarisierende Zitate
+- Namen bei sensiblen Themen (Opfer, medizinische Fälle)
+- Unnötige Details die nur schockieren oder provozieren sollen
 
-Fokus auf:
-- Sachliche Fakten
-- Neutrale Sprache
+**Fokus auf:**
+- Sachliche Fakten auf höchster Abstraktionsebene
+- Neutrale Sprache ohne jegliche Emotion
 - Schweizer Hochdeutsch
-- Informativ aber nicht belastend
+- Informativ aber NIEMALS emotional belastend
+- Das übergeordnete Ereignis, nicht die sensationellen Details
+
+**Beispiele für extrem sachliche Umschreibungen:**
+- ❌ Original: "Imane Khelif bestätigt Hormonbehandlung zur Senkung des Testosteronspiegels vor Olympiade"
+- ✅ Sachlich: "Boxerin informiert über medizinische Vorbereitung für Olympiade 2024"
+
+- ❌ Original: "Grausamer Mord an Familie - Polizei findet drei Leichen"
+- ✅ Sachlich: "Polizeieinsatz nach Vorfall mit Todesfolge"
+
+- ❌ Original: "Politiker platzt im Interview der Kragen - heftige Beleidigungen"
+- ✅ Sachlich: "Interview mit Politiker führt zu kontroversen Äusserungen"
 
 ## Kosten-Optimierung & Erwartete Kosten
 
@@ -131,16 +147,21 @@ OPENAI_API_KEY=sk-...  # OpenAI API Key für GPT-4o-mini
 
 ## Aktuelle Features (Live auf sachlich-news.vercel.app)
 
-✅ Sachliche News-Übersicht mit Bildern
+✅ **EXTREM sachliche** News-Übersicht mit Bildern
 ✅ 5 Kategorien: Zürich, Schweiz, International, People, Alternativ
 ✅ Interne Artikel-Detailseiten (kein Verlassen der Seite)
 ✅ **Vollständige Artikel-Scraping für ALLE Quellen** (nicht nur Summaries)
-✅ AI-Rewriting von vollständigen Artikeln mit GPT-4o-mini
+✅ **Verbessertes AI-Rewriting** mit GPT-4o-mini:
+  - Entfernt sensible medizinische/persönliche Details
+  - Reduziert Headlines auf übergeordnetes Ereignis
+  - Temperatur 0.3 für konsistente Sachlichkeit
+  - Max 2500 Tokens für vollständigere Artikel
 ✅ Responsive Design für Mobile, Tablet und Desktop
 ✅ **News-Quellen:**
   - RSS: SRF, Blick, NZZ, Infosperber, Zeitpunkt, Schweizer Monat
   - Web-Scraping: Weltwoche, Nebelspalter (mit Paywall-Umgehung, private Nutzung)
 ✅ Jeder Artikel wird vollständig gescrapt und sachlich umgeschrieben (5-15 Sek)
+✅ **Erweiterte Error Logging** für besseres Debugging
 
 ## Zukünftige Verbesserungen
 
