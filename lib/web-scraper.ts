@@ -224,8 +224,7 @@ export async function scrapeWeltwocheHeadlines(): Promise<NewsArticle[]> {
 // Nebelspalter Homepage scrapen für Headlines
 export async function scrapeNebelspalterHeadlines(): Promise<NewsArticle[]> {
   try {
-    // Verwende die Themen-Seite mit Artikelliste
-    const response = await axios.get('https://www.nebelspalter.ch/themen/alle-themen', {
+    const response = await axios.get('https://www.nebelspalter.ch/', {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36',
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
@@ -237,27 +236,33 @@ export async function scrapeNebelspalterHeadlines(): Promise<NewsArticle[]> {
     const articles: NewsArticle[] = [];
     const seenUrls = new Set<string>();
 
-    // Suche alle Links die zu Artikeln führen
+    // Nebelspalter Artikel-URLs haben das Pattern /themen/YYYY/MM/...
     $('a').each((index, el) => {
       const $el = $(el);
-      const title = $el.text().trim();
       const href = $el.attr('href') || '';
 
-      // Nebelspalter Artikel haben meist längere Titel
-      if (title.length > 30 && title.length < 200 && href.includes('/themen/')) {
-        const fullUrl = href.startsWith('http') ? href : `https://www.nebelspalter.ch${href}`;
+      // Prüfe auf Artikel-URL Pattern (Jahr/Monat)
+      if (href.match(/\/themen\/\d{4}\/\d{2}\//)) {
+        const title = $el.text().trim();
 
-        if (!seenUrls.has(fullUrl) && !fullUrl.includes('?filter=')) {
-          seenUrls.add(fullUrl);
-          articles.push({
-            id: `nebelspalter-${Date.now()}-${articles.length}`,
-            title,
-            summary: title,
-            category: 'alternativ',
-            source: 'Nebelspalter',
-            publishedAt: new Date(),
-            originalUrl: fullUrl,
-          });
+        // Fallback: Wenn kein Text, suche im Eltern-Element
+        const finalTitle = title.length > 20 ? title : $el.closest('article, div').find('h1, h2, h3, h4').first().text().trim();
+
+        if (finalTitle && finalTitle.length > 20 && finalTitle.length < 200) {
+          const fullUrl = href.startsWith('http') ? href : `https://www.nebelspalter.ch${href}`;
+
+          if (!seenUrls.has(fullUrl)) {
+            seenUrls.add(fullUrl);
+            articles.push({
+              id: `nebelspalter-${Date.now()}-${articles.length}`,
+              title: finalTitle,
+              summary: finalTitle,
+              category: 'alternativ',
+              source: 'Nebelspalter',
+              publishedAt: new Date(),
+              originalUrl: fullUrl,
+            });
+          }
         }
       }
     });
