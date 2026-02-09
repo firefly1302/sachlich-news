@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { fetchAllNews, fetchNewsByCategory } from '@/lib/news-fetcher';
 import { rewriteHeadlineAndSummary } from '@/lib/ai-rewriter';
+import { shouldFilterArticle } from '@/lib/web-scraper';
 
 export const dynamic = 'force-dynamic';
 
@@ -47,8 +48,18 @@ export async function GET(request: NextRequest) {
       })
     );
 
-    console.log(`✅ Successfully processed ${rewrittenArticles.length} articles\n`);
-    return NextResponse.json({ articles: rewrittenArticles });
+    // WICHTIG: Filter NACH dem AI-Rewriting anwenden!
+    // Die AI kann belastende Keywords wieder einführen
+    const filteredArticles = rewrittenArticles.filter(article => {
+      const shouldFilter = shouldFilterArticle(article.title);
+      if (shouldFilter) {
+        console.log(`⚠️ Gefiltert (nach AI): ${article.title.substring(0, 60)}...`);
+      }
+      return !shouldFilter;
+    });
+
+    console.log(`✅ ${filteredArticles.length}/${rewrittenArticles.length} Artikel nach Filter\n`);
+    return NextResponse.json({ articles: filteredArticles });
   } catch (error) {
     console.error('❌ CRITICAL ERROR beim Laden der News:', error);
     if (error instanceof Error) {
