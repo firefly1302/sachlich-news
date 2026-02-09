@@ -327,3 +327,70 @@ export async function scrapeNebelspalterHeadlines(): Promise<NewsArticle[]> {
     return [];
   }
 }
+
+// 20 Minuten Homepage scrapen für Headlines
+export async function scrape20MinHeadlines(section: string, category: string): Promise<NewsArticle[]> {
+  try {
+    // 20min Kategorien-URLs
+    const urls: Record<string, string> = {
+      'zuerich': 'https://www.20min.ch/de/zuerich',
+      'schweiz': 'https://www.20min.ch/de/schweiz',
+      'ausland': 'https://www.20min.ch/de/ausland',
+      'people': 'https://www.20min.ch/de/people',
+    };
+
+    const url = urls[section] || 'https://www.20min.ch/de';
+
+    const response = await axios.get(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+      },
+      timeout: 15000,
+    });
+
+    const $ = cheerio.load(response.data);
+    const articles: NewsArticle[] = [];
+    const seenUrls = new Set<string>();
+
+    // 20min verwendet verschiedene Link-Strukturen
+    // Hauptartikel: /story/...
+    $('a[href*="/story/"]').each((index, el) => {
+      const $el = $(el);
+      const href = $el.attr('href') || '';
+
+      // Finde Titel - entweder im Link-Text oder in Heading-Tags
+      let title = $el.text().trim();
+      if (!title || title.length < 20) {
+        title = $el.find('h1, h2, h3, h4').first().text().trim();
+      }
+      if (!title || title.length < 20) {
+        title = $el.closest('article, div').find('h1, h2, h3, h4').first().text().trim();
+      }
+
+      // Filter: Nur richtige Artikel (mindestens 20 Zeichen Titel, max 200)
+      if (title && title.length > 20 && title.length < 200 && href) {
+        const fullUrl = href.startsWith('http') ? href : `https://www.20min.ch${href}`;
+
+        if (!seenUrls.has(fullUrl) && fullUrl.includes('/story/')) {
+          seenUrls.add(fullUrl);
+          articles.push({
+            id: `20min-${Date.now()}-${articles.length}`,
+            title,
+            summary: title,
+            category: category,
+            source: '20 Minuten',
+            publishedAt: new Date(),
+            originalUrl: fullUrl,
+          });
+        }
+      }
+    });
+
+    console.log(`20 Minuten (${section}): ${articles.length} Artikel gefunden`);
+    return articles.slice(0, 10); // Max 10 Artikel
+  } catch (error) {
+    console.error(`Fehler beim Scrapen von 20min (${section}):`, error);
+    return [];
+  }
+}

@@ -5,23 +5,19 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: 'www.srf.ch',
-      },
-      {
-        protocol: 'https',
         hostname: 'www.blick.ch',
       },
       {
         protocol: 'https',
-        hostname: 'img.nzz.ch',
-      },
-      {
-        protocol: 'https',
-        hostname: 'www.nzz.ch',
-      },
-      {
-        protocol: 'https',
         hostname: '*.blick.ch',
+      },
+      {
+        protocol: 'https',
+        hostname: 'www.20min.ch',
+      },
+      {
+        protocol: 'https',
+        hostname: '*.20min.ch',
       },
     ],
   },

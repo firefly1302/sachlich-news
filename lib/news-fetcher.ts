@@ -1,20 +1,29 @@
 import Parser from 'rss-parser';
 import { NewsArticle, NewsFeed } from './types';
 import { NEWS_FEEDS } from './news-sources';
-import { scrapeWeltwocheHeadlines, scrapeNebelspalterHeadlines } from './web-scraper';
+import {
+  scrapeWeltwocheHeadlines,
+  scrapeNebelspalterHeadlines,
+  scrape20MinHeadlines
+} from './web-scraper';
 
 const parser = new Parser();
 
 export async function fetchNewsFromFeed(feed: NewsFeed): Promise<NewsArticle[]> {
   try {
-    // Web-Scraping für Weltwoche und Nebelspalter
+    // Web-Scraping für Weltwoche, Nebelspalter und 20min
     if (feed.url.startsWith('SCRAPE:')) {
       const source = feed.url.replace('SCRAPE:', '');
+
       if (source === 'weltwoche') {
         return await scrapeWeltwocheHeadlines();
       } else if (source === 'nebelspalter') {
         return await scrapeNebelspalterHeadlines();
+      } else if (source.startsWith('20min-')) {
+        const category = source.replace('20min-', '');
+        return await scrape20MinHeadlines(category, feed.category as any);
       }
+
       return [];
     }
 
