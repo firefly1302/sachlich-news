@@ -247,8 +247,15 @@ export async function scrapeWeltwocheHeadlines(): Promise<NewsArticle[]> {
       const title = $el.text().trim();
       const href = $el.attr('href') || '';
 
-      // Filter: Nur richtige Artikel (mindestens 30 Zeichen Titel)
-      if (title.length > 30 && title.length < 200 && href) {
+      // Filter nutzlose Artikel aus
+      const isUseless =
+        title.includes('Bilder des Tages') ||
+        title.includes('Bildstrecke') ||
+        title.includes('Galerie') ||
+        title.match(/^(Wetter|Horoskop|Comics|Quiz)/i);
+
+      // Filter: Nur richtige Artikel (mindestens 30 Zeichen Titel, nicht nutzlos)
+      if (title.length > 30 && title.length < 200 && href && !isUseless) {
         const fullUrl = href.startsWith('http') ? href : `https://weltwoche.ch${href}`;
 
         if (!seenUrls.has(fullUrl)) {
@@ -301,7 +308,14 @@ export async function scrapeNebelspalterHeadlines(): Promise<NewsArticle[]> {
         // Fallback: Wenn kein Text, suche im Eltern-Element
         const finalTitle = title.length > 20 ? title : $el.closest('article, div').find('h1, h2, h3, h4').first().text().trim();
 
-        if (finalTitle && finalTitle.length > 20 && finalTitle.length < 200) {
+        // Filter nutzlose Artikel aus
+        const isUseless =
+          finalTitle.includes('Bilder des Tages') ||
+          finalTitle.includes('Bildstrecke') ||
+          finalTitle.includes('Galerie') ||
+          finalTitle.match(/^(Wetter|Horoskop|Comics|Quiz)/i);
+
+        if (finalTitle && finalTitle.length > 20 && finalTitle.length < 200 && !isUseless) {
           const fullUrl = href.startsWith('http') ? href : `https://www.nebelspalter.ch${href}`;
 
           if (!seenUrls.has(fullUrl)) {
@@ -438,8 +452,17 @@ export async function scrape20MinHeadlines(section: string, category: NewsCatego
         title = $el.closest('article, div').find('h1, h2, h3, h4').first().text().trim();
       }
 
-      // Filter: Nur richtige Artikel (mindestens 20 Zeichen Titel, max 200)
-      if (title && title.length > 20 && title.length < 200 && href) {
+      // Filter nutzlose Artikel aus
+      const isUseless =
+        title.includes('Bilder des Tages') ||
+        title.includes('Bildstrecke') ||
+        title.includes('Galerie') ||
+        title.includes('Tägliche Comics') ||
+        title.includes('zeigt aktuelle Ereignisse') ||
+        title.match(/^(Wetter|Horoskop|Comics|Quiz)/i);
+
+      // Filter: Nur richtige Artikel (mindestens 30 Zeichen Titel, max 200, nicht nutzlos)
+      if (title && title.length > 30 && title.length < 200 && href && !isUseless) {
         const fullUrl = href.startsWith('http') ? href : `https://www.20min.ch${href}`;
 
         if (!seenUrls.has(fullUrl) && fullUrl.includes('/story/')) {
