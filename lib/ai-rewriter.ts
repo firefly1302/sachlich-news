@@ -108,6 +108,18 @@ export async function rewriteFullArticle(content: string): Promise<string> {
     console.log('=== Full Article Rewriting ===');
     console.log('Content Length:', content.length);
 
+    // Prüfe ob Content zu kurz oder eine Fehlermeldung ist
+    if (!content || content.length < 100) {
+      console.warn('⚠️ Content too short, skipping rewrite');
+      return 'Dieser Artikel konnte leider nicht geladen werden. Die Quelle ist möglicherweise durch eine Paywall geschützt oder vorübergehend nicht verfügbar.';
+    }
+
+    // Prüfe ob Content bereits eine Fehlermeldung ist
+    if (content.includes('Fehler beim Laden') || content.includes('konnte nicht vollständig geladen werden')) {
+      console.warn('⚠️ Content is error message, not rewriting');
+      return content;
+    }
+
     const response = await openai.chat.completions.create({
       model: 'gpt-4o-mini',
       messages: [
@@ -131,6 +143,6 @@ export async function rewriteFullArticle(content: string): Promise<string> {
     if (error instanceof Error) {
       console.error('Error Details:', error.message);
     }
-    return content;
+    return 'Dieser Artikel konnte leider nicht umgeschrieben werden. Bitte versuchen Sie es später erneut.';
   }
 }

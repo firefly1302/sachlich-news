@@ -145,6 +145,8 @@ export async function scrapeArticle(url: string): Promise<string> {
 
   // Generischer Scraper für alle anderen Schweizer News-Seiten
   try {
+    console.log('📄 Scraping article:', url);
+
     // Für Paywall-Seiten: 12ft.io verwenden, sonst direkt
     const useBypass = url.includes('nzz.ch') || url.includes('weltwoche') || url.includes('nebelspalter');
     const html = useBypass ? await bypassPaywall(url) : await axios.get(url, {
@@ -155,6 +157,15 @@ export async function scrapeArticle(url: string): Promise<string> {
     }).then(res => res.data);
 
     const $ = cheerio.load(html);
+
+    // Priorisiere #readability-page-1 für 12ft.io
+    if (useBypass) {
+      const readabilityContent = $('#readability-page-1').text().trim();
+      if (readabilityContent && readabilityContent.length > 200) {
+        console.log('✓ Found content via #readability-page-1:', readabilityContent.length, 'chars');
+        return readabilityContent;
+      }
+    }
 
     let content = '';
 
@@ -191,16 +202,24 @@ export async function scrapeArticle(url: string): Promise<string> {
       if (elements.length > 0) {
         elements.each((_, el) => {
           const text = $(el).text().trim();
-          // Filtere kurze Texte und Metadaten aus
-          if (text.length > 50 && !text.includes('©') && !text.includes('Quelle:')) {
+          // Filtere kurze Texte, Metadaten und Datum aus
+          if (text.length > 50 && !text.includes('©') && !text.includes('Quelle:') && !text.match(/^\d{2}\.\d{2}\.\d{4}$/)) {
             content += text + '\n\n';
           }
         });
-        if (content.length > 300) break; // Genug Content gefunden
+        if (content.length > 500) {
+          console.log('✓ Found content via selector:', selector, '-', content.length, 'chars');
+          break;
+        }
       }
     }
 
-    return content.trim() || 'Artikel konnte nicht vollständig geladen werden. Möglicherweise blockiert die Website das automatische Laden.';
+    if (!content || content.length < 200) {
+      console.warn('⚠️ Content too short or not found');
+      return 'Dieser Artikel konnte nicht vollständig geladen werden. Die Quelle ist möglicherweise durch eine Paywall geschützt oder verwendet eine nicht unterstützte Struktur.';
+    }
+
+    return content.trim();
   } catch (error) {
     console.error('Fehler beim Scrapen:', error);
     return 'Fehler beim Laden des Artikels. Die Quelle ist möglicherweise nicht verfügbar.';
