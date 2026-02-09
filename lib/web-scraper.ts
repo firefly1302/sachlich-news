@@ -32,34 +32,52 @@ export async function scrapeWeltwoche(url: string): Promise<string> {
     const html = await bypassPaywall(url);
     const $ = cheerio.load(html);
 
-    // Weltwoche-spezifische Selektoren
+    console.log('📄 Scraping Weltwoche:', url);
+
+    // 12ft.io verwendet #readability-page-1 für den Hauptinhalt
     let content = '';
 
-    // Versuche verschiedene Content-Selektoren
+    // Primärer Selektor: 12ft.io Readability Container
+    const readabilityContent = $('#readability-page-1').text().trim();
+    if (readabilityContent && readabilityContent.length > 200) {
+      console.log('✓ Found content via #readability-page-1:', readabilityContent.length, 'chars');
+      return readabilityContent;
+    }
+
+    // Fallback: Versuche verschiedene Content-Selektoren für direkten Zugriff
     const selectors = [
-      'article .article-content',
-      '.article-body',
-      '.entry-content',
+      '.article-body p',
+      '.article-content p',
+      'article .text p',
+      '.entry-content p',
       'article p',
-      '.content p',
     ];
 
     for (const selector of selectors) {
       const elements = $(selector);
-      if (elements.length > 0) {
+      if (elements.length > 3) { // Mind. 3 Paragraphen
         elements.each((_, el) => {
           const text = $(el).text().trim();
-          if (text.length > 30) {
+          // Filtere Headlines und Metadaten aus
+          if (text.length > 50 && !text.match(/^\d{2}\.\d{2}\.\d{4}$/)) {
             content += text + '\n\n';
           }
         });
-        if (content.length > 100) break;
+        if (content.length > 500) {
+          console.log('✓ Found content via selector:', selector, '-', content.length, 'chars');
+          break;
+        }
       }
     }
 
-    return content.trim() || 'Artikel konnte nicht vollständig geladen werden.';
+    if (!content || content.length < 200) {
+      console.warn('⚠️ Weltwoche content too short, might be paywall blocked');
+      return 'Artikel konnte nicht vollständig geladen werden. Die Quelle ist möglicherweise durch eine Paywall geschützt.';
+    }
+
+    return content.trim();
   } catch (error) {
-    console.error('Fehler beim Scrapen von Weltwoche:', error);
+    console.error('❌ Fehler beim Scrapen von Weltwoche:', error);
     return 'Fehler beim Laden des Artikels.';
   }
 }
@@ -70,33 +88,49 @@ export async function scrapeNebelspalter(url: string): Promise<string> {
     const html = await bypassPaywall(url);
     const $ = cheerio.load(html);
 
-    let content = '';
+    console.log('📄 Scraping Nebelspalter:', url);
 
-    // Nebelspalter-spezifische Selektoren
+    // 12ft.io verwendet #readability-page-1 für den Hauptinhalt
+    const readabilityContent = $('#readability-page-1').text().trim();
+    if (readabilityContent && readabilityContent.length > 200) {
+      console.log('✓ Found content via #readability-page-1:', readabilityContent.length, 'chars');
+      return readabilityContent;
+    }
+
+    // Fallback: Nebelspalter-spezifische Selektoren
+    let content = '';
     const selectors = [
-      'article .article-text',
-      '.post-content',
-      '.entry-content',
+      '.post-content p',
+      '.article-text p',
+      '.entry-content p',
       'article p',
       '.text-content p',
     ];
 
     for (const selector of selectors) {
       const elements = $(selector);
-      if (elements.length > 0) {
+      if (elements.length > 3) {
         elements.each((_, el) => {
           const text = $(el).text().trim();
-          if (text.length > 30) {
+          if (text.length > 50 && !text.match(/^\d{2}\.\d{2}\.\d{4}$/)) {
             content += text + '\n\n';
           }
         });
-        if (content.length > 100) break;
+        if (content.length > 500) {
+          console.log('✓ Found content via selector:', selector, '-', content.length, 'chars');
+          break;
+        }
       }
     }
 
-    return content.trim() || 'Artikel konnte nicht vollständig geladen werden.';
+    if (!content || content.length < 200) {
+      console.warn('⚠️ Nebelspalter content too short');
+      return 'Artikel konnte nicht vollständig geladen werden. Die Quelle ist möglicherweise durch eine Paywall geschützt.';
+    }
+
+    return content.trim();
   } catch (error) {
-    console.error('Fehler beim Scrapen von Nebelspalter:', error);
+    console.error('❌ Fehler beim Scrapen von Nebelspalter:', error);
     return 'Fehler beim Laden des Artikels.';
   }
 }
