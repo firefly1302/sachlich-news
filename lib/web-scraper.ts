@@ -24,6 +24,12 @@ export function shouldFilterArticle(title: string): boolean {
     /kind (stirbt|tot|verhungert|verdurstet|erstickt)/i,
     /baby (tot|stirbt|verhungert)/i,
 
+    // Prozesse/Urteile zu Kindern und Gewalt
+    /prozess.*(kind|kindes|jungen|mädchen)/i,
+    /urteil.*(kind|kindes|jungen|mädchen)/i,
+    /misshandlung.*(kind|kindes|jungen|mädchen|sohn|tochter)/i,
+    /vernachlässigung.*(kind|kindes|sohn|tochter)/i,
+
     // Extreme Gewalt allgemein
     /folter/i,
     /brutal|grausam|verstümmelt/i,
