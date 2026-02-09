@@ -5,11 +5,7 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: 'www.blick.ch',
-      },
-      {
-        protocol: 'https',
-        hostname: '*.blick.ch',
+        hostname: 'www.srf.ch',
       },
       {
         protocol: 'https',

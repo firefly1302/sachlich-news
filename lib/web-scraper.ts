@@ -328,6 +328,76 @@ export async function scrapeNebelspalterHeadlines(): Promise<NewsArticle[]> {
   }
 }
 
+// Blick Homepage scrapen für Headlines (da RSS blockiert ist)
+export async function scrapeBlickHeadlines(section: string, category: NewsCategory): Promise<NewsArticle[]> {
+  try {
+    // Blick Kategorien-URLs
+    const urls: Record<string, string> = {
+      'zuerich': 'https://www.blick.ch/schweiz/zuerich/',
+      'schweiz': 'https://www.blick.ch/schweiz/',
+      'politik': 'https://www.blick.ch/politik/',
+      'wirtschaft': 'https://www.blick.ch/wirtschaft/',
+      'ausland': 'https://www.blick.ch/ausland/',
+      'people': 'https://www.blick.ch/people-tv/',
+      'life': 'https://www.blick.ch/life/',
+      'sport': 'https://www.blick.ch/sport/',
+    };
+
+    const url = urls[section] || 'https://www.blick.ch/';
+
+    const response = await axios.get(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+      },
+      timeout: 15000,
+    });
+
+    const $ = cheerio.load(response.data);
+    const articles: NewsArticle[] = [];
+    const seenUrls = new Set<string>();
+
+    // Blick verwendet article-Links
+    $('a[href*="/story/"], a[href*="blick.ch"]').each((index, el) => {
+      const $el = $(el);
+      const href = $el.attr('href') || '';
+
+      // Finde Titel
+      let title = $el.text().trim();
+      if (!title || title.length < 20) {
+        title = $el.find('h1, h2, h3, h4').first().text().trim();
+      }
+      if (!title || title.length < 20) {
+        title = $el.closest('article, div').find('h1, h2, h3, h4').first().text().trim();
+      }
+
+      // Filter: Nur richtige Artikel
+      if (title && title.length > 20 && title.length < 200 && href) {
+        const fullUrl = href.startsWith('http') ? href : `https://www.blick.ch${href}`;
+
+        if (!seenUrls.has(fullUrl) && (fullUrl.includes('blick.ch') && !fullUrl.includes('/rss.xml'))) {
+          seenUrls.add(fullUrl);
+          articles.push({
+            id: `blick-${Date.now()}-${articles.length}`,
+            title,
+            summary: title,
+            category: category,
+            source: 'Blick',
+            publishedAt: new Date(),
+            originalUrl: fullUrl,
+          });
+        }
+      }
+    });
+
+    console.log(`Blick (${section}): ${articles.length} Artikel gefunden`);
+    return articles.slice(0, 10); // Max 10 Artikel
+  } catch (error) {
+    console.error(`Fehler beim Scrapen von Blick (${section}):`, error);
+    return [];
+  }
+}
+
 // 20 Minuten Homepage scrapen für Headlines
 export async function scrape20MinHeadlines(section: string, category: NewsCategory): Promise<NewsArticle[]> {
   try {

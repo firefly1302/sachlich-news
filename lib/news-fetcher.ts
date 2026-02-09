@@ -4,14 +4,15 @@ import { NEWS_FEEDS } from './news-sources';
 import {
   scrapeWeltwocheHeadlines,
   scrapeNebelspalterHeadlines,
-  scrape20MinHeadlines
+  scrape20MinHeadlines,
+  scrapeBlickHeadlines
 } from './web-scraper';
 
 const parser = new Parser();
 
 export async function fetchNewsFromFeed(feed: NewsFeed): Promise<NewsArticle[]> {
   try {
-    // Web-Scraping für Weltwoche, Nebelspalter und 20min
+    // Web-Scraping für Blick, Weltwoche, Nebelspalter und 20min
     if (feed.url.startsWith('SCRAPE:')) {
       const source = feed.url.replace('SCRAPE:', '');
 
@@ -22,6 +23,9 @@ export async function fetchNewsFromFeed(feed: NewsFeed): Promise<NewsArticle[]> 
       } else if (source.startsWith('20min-')) {
         const category = source.replace('20min-', '');
         return await scrape20MinHeadlines(category, feed.category as any);
+      } else if (source.startsWith('blick-')) {
+        const category = source.replace('blick-', '');
+        return await scrapeBlickHeadlines(category, feed.category as any);
       }
 
       return [];

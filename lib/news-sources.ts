@@ -1,13 +1,14 @@
 import { NewsFeed } from './types';
 
 // RSS Feeds für verschiedene Kategorien
-// Fokus auf Blick (paywall-frei) und 20min (via Scraping)
+// SRF (funktioniert zuverlässig) + 20min (via Scraping)
+// Blick blockiert alle Zugriffe (RSS + Scraping) mit 403
 export const NEWS_FEEDS: NewsFeed[] = [
   // Zürich - lokale News
   {
-    url: 'https://www.blick.ch/schweiz/zuerich/rss.xml',
+    url: 'https://www.srf.ch/news/regional/zuerich-schaffhausen.rss',
     category: 'zuerich',
-    name: 'Blick Zürich'
+    name: 'SRF Zürich'
   },
   {
     url: 'SCRAPE:20min-zuerich',
@@ -17,19 +18,9 @@ export const NEWS_FEEDS: NewsFeed[] = [
 
   // Schweiz - aktuelle News
   {
-    url: 'https://www.blick.ch/schweiz/rss.xml',
+    url: 'https://www.srf.ch/news/bnf/rss/1646',
     category: 'schweiz',
-    name: 'Blick Schweiz'
-  },
-  {
-    url: 'https://www.blick.ch/politik/rss.xml',
-    category: 'schweiz',
-    name: 'Blick Politik'
-  },
-  {
-    url: 'https://www.blick.ch/wirtschaft/rss.xml',
-    category: 'schweiz',
-    name: 'Blick Wirtschaft'
+    name: 'SRF News Schweiz'
   },
   {
     url: 'SCRAPE:20min-schweiz',
@@ -39,9 +30,9 @@ export const NEWS_FEEDS: NewsFeed[] = [
 
   // International
   {
-    url: 'https://www.blick.ch/ausland/rss.xml',
+    url: 'https://www.srf.ch/news/bnf/rss/1645',
     category: 'international',
-    name: 'Blick Ausland'
+    name: 'SRF News International'
   },
   {
     url: 'SCRAPE:20min-ausland',
@@ -51,19 +42,9 @@ export const NEWS_FEEDS: NewsFeed[] = [
 
   // People/Unterhaltung - inkl. Sport
   {
-    url: 'https://www.blick.ch/people-tv/rss.xml',
+    url: 'https://www.srf.ch/sport.rss',
     category: 'people',
-    name: 'Blick People & TV'
-  },
-  {
-    url: 'https://www.blick.ch/life/rss.xml',
-    category: 'people',
-    name: 'Blick Life'
-  },
-  {
-    url: 'https://www.blick.ch/sport/rss.xml',
-    category: 'people',
-    name: 'Blick Sport'
+    name: 'SRF Sport'
   },
   {
     url: 'SCRAPE:20min-people',
