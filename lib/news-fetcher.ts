@@ -34,7 +34,14 @@ export async function fetchNewsFromFeed(feed: NewsFeed): Promise<NewsArticle[]> 
     // Normales RSS-Fetching
     const rssFeed = await parser.parseURL(feed.url);
 
-    const articles: NewsArticle[] = (rssFeed.items || []).slice(0, 10).map((item, index) => {
+    // Sortiere RSS Items nach Datum (neueste zuerst)
+    const sortedItems = (rssFeed.items || []).sort((a, b) => {
+      const dateA = a.pubDate ? new Date(a.pubDate).getTime() : 0;
+      const dateB = b.pubDate ? new Date(b.pubDate).getTime() : 0;
+      return dateB - dateA; // Neueste zuerst
+    });
+
+    const articles: NewsArticle[] = sortedItems.slice(0, 10).map((item, index) => {
       const id = `${feed.category}-${Date.now()}-${index}`;
 
       return {

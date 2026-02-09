@@ -273,8 +273,10 @@ export async function scrapeWeltwocheHeadlines(): Promise<NewsArticle[]> {
       }
     });
 
+    // Weltwoche hat keine IDs, aber Homepage ist bereits sortiert
+    // Behalte die Reihenfolge bei (neueste zuerst auf Homepage)
     console.log(`Weltwoche: ${articles.length} Artikel gefunden`);
-    return articles.slice(0, 10); // Max 10 Artikel
+    return articles.slice(0, 10); // Max 10 Artikel (bereits sortiert)
   } catch (error) {
     console.error('Fehler beim Scrapen von Weltwoche Headlines:', error);
     return [];
@@ -334,8 +336,21 @@ export async function scrapeNebelspalterHeadlines(): Promise<NewsArticle[]> {
       }
     });
 
-    console.log(`Nebelspalter: ${articles.length} Artikel gefunden`);
-    return articles.slice(0, 10); // Max 10 Artikel
+    // Nebelspalter hat Datum im URL-Pattern /themen/YYYY/MM/DD/
+    // Sortiere nach URL (neuere Daten zuerst)
+    articles.sort((a, b) => {
+      const dateA = a.originalUrl.match(/\/(\d{4})\/(\d{2})\/(\d{2})\//);
+      const dateB = b.originalUrl.match(/\/(\d{4})\/(\d{2})\/(\d{2})\//);
+      if (dateA && dateB) {
+        const timestampA = new Date(`${dateA[1]}-${dateA[2]}-${dateA[3]}`).getTime();
+        const timestampB = new Date(`${dateB[1]}-${dateB[2]}-${dateB[3]}`).getTime();
+        return timestampB - timestampA; // Neueste zuerst
+      }
+      return 0;
+    });
+
+    console.log(`Nebelspalter: ${articles.length} Artikel gefunden, sortiert nach Datum`);
+    return articles.slice(0, 10); // Max 10 neueste Artikel
   } catch (error) {
     console.error('Fehler beim Scrapen von Nebelspalter Headlines:', error);
     return [];
@@ -480,8 +495,15 @@ export async function scrape20MinHeadlines(section: string, category: NewsCatego
       }
     });
 
-    console.log(`20 Minuten (${section}): ${articles.length} Artikel gefunden`);
-    return articles.slice(0, 10); // Max 10 Artikel
+    // Sortiere nach Story-ID (höhere ID = neuer)
+    articles.sort((a, b) => {
+      const idA = parseInt(a.originalUrl.match(/-(\d+)$/)?.[1] || '0');
+      const idB = parseInt(b.originalUrl.match(/-(\d+)$/)?.[1] || '0');
+      return idB - idA; // Neueste zuerst
+    });
+
+    console.log(`20 Minuten (${section}): ${articles.length} Artikel gefunden, sortiert nach Story-ID`);
+    return articles.slice(0, 10); // Max 10 neueste Artikel
   } catch (error) {
     console.error(`Fehler beim Scrapen von 20min (${section}):`, error);
     return [];
