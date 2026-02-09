@@ -2,6 +2,63 @@ import axios from 'axios';
 import * as cheerio from 'cheerio';
 import { NewsArticle, NewsCategory } from './types';
 
+// Filter-Funktion: Entfernt emotional belastende und irrelevante Artikel
+export function shouldFilterArticle(title: string): boolean {
+  const titleLower = title.toLowerCase();
+
+  // 1. Nutzlose Inhalte (Bildstrecken, Comics, etc.)
+  const uselessPatterns = [
+    /bilder des tages/i,
+    /bildstrecke/i,
+    /galerie/i,
+    /tägliche comics/i,
+    /zeigt aktuelle ereignisse/i,
+    /^(wetter|horoskop|comics|quiz)/i,
+  ];
+
+  // 2. Emotional belastende Einzelschicksale (KEINE gesellschaftliche Relevanz)
+  const disturbingPatterns = [
+    // Extreme Gewalt an Kindern
+    /kindesmord/i,
+    /kindesmissbrauch/i,
+    /kind (stirbt|tot|verhungert|verdurstet|erstickt)/i,
+    /baby (tot|stirbt|verhungert)/i,
+
+    // Extreme Gewalt allgemein
+    /folter/i,
+    /brutal|grausam|verstümmelt/i,
+    /missbraucht|vergewaltigt|misshandelt/i,
+
+    // Familiendramen / Einzelschicksale
+    /prozess (gegen|in).*(eltern|mutter|vater|paar)/i,
+    /eltern (verurteilt|angeklagt).*wegen/i,
+    /dämon|exorzismus/i,
+
+    // Namen von Privatpersonen in Gewalt-Kontext
+    // (Kevin, Nathalie etc. sind Privatpersonen, keine öffentlichen Figuren)
+    /(kevin|nathalie|michael|sandra).*(verurteilt|angeklagt|getötet)/i,
+  ];
+
+  // 3. Prüfe auf nutzlose Inhalte
+  for (const pattern of uselessPatterns) {
+    if (pattern.test(titleLower)) {
+      console.log(`⚠️ Gefiltert (nutzlos): ${title.substring(0, 60)}...`);
+      return true;
+    }
+  }
+
+  // 4. Prüfe auf belastende Einzelschicksale
+  for (const pattern of disturbingPatterns) {
+    if (pattern.test(titleLower)) {
+      console.log(`⚠️ Gefiltert (belastend): ${title.substring(0, 60)}...`);
+      return true;
+    }
+  }
+
+  // Artikel ist OK
+  return false;
+}
+
 // 12ft.io Paywall-Umgehung
 async function bypassPaywall(url: string): Promise<string> {
   try {
@@ -247,15 +304,8 @@ export async function scrapeWeltwocheHeadlines(): Promise<NewsArticle[]> {
       const title = $el.text().trim();
       const href = $el.attr('href') || '';
 
-      // Filter nutzlose Artikel aus
-      const isUseless =
-        title.includes('Bilder des Tages') ||
-        title.includes('Bildstrecke') ||
-        title.includes('Galerie') ||
-        title.match(/^(Wetter|Horoskop|Comics|Quiz)/i);
-
-      // Filter: Nur richtige Artikel (mindestens 30 Zeichen Titel, nicht nutzlos)
-      if (title.length > 30 && title.length < 200 && href && !isUseless) {
+      // Filter: Nur relevante, nicht-belastende Artikel
+      if (title.length > 30 && title.length < 200 && href && !shouldFilterArticle(title)) {
         const fullUrl = href.startsWith('http') ? href : `https://weltwoche.ch${href}`;
 
         if (!seenUrls.has(fullUrl)) {
@@ -310,14 +360,8 @@ export async function scrapeNebelspalterHeadlines(): Promise<NewsArticle[]> {
         // Fallback: Wenn kein Text, suche im Eltern-Element
         const finalTitle = title.length > 20 ? title : $el.closest('article, div').find('h1, h2, h3, h4').first().text().trim();
 
-        // Filter nutzlose Artikel aus
-        const isUseless =
-          finalTitle.includes('Bilder des Tages') ||
-          finalTitle.includes('Bildstrecke') ||
-          finalTitle.includes('Galerie') ||
-          finalTitle.match(/^(Wetter|Horoskop|Comics|Quiz)/i);
-
-        if (finalTitle && finalTitle.length > 20 && finalTitle.length < 200 && !isUseless) {
+        // Filter: Nur relevante, nicht-belastende Artikel
+        if (finalTitle && finalTitle.length > 20 && finalTitle.length < 200 && !shouldFilterArticle(finalTitle)) {
           const fullUrl = href.startsWith('http') ? href : `https://www.nebelspalter.ch${href}`;
 
           if (!seenUrls.has(fullUrl)) {
@@ -467,17 +511,8 @@ export async function scrape20MinHeadlines(section: string, category: NewsCatego
         title = $el.closest('article, div').find('h1, h2, h3, h4').first().text().trim();
       }
 
-      // Filter nutzlose Artikel aus
-      const isUseless =
-        title.includes('Bilder des Tages') ||
-        title.includes('Bildstrecke') ||
-        title.includes('Galerie') ||
-        title.includes('Tägliche Comics') ||
-        title.includes('zeigt aktuelle Ereignisse') ||
-        title.match(/^(Wetter|Horoskop|Comics|Quiz)/i);
-
-      // Filter: Nur richtige Artikel (mindestens 30 Zeichen Titel, max 200, nicht nutzlos)
-      if (title && title.length > 30 && title.length < 200 && href && !isUseless) {
+      // Filter: Nur relevante, nicht-belastende Artikel
+      if (title && title.length > 30 && title.length < 200 && href && !shouldFilterArticle(title)) {
         const fullUrl = href.startsWith('http') ? href : `https://www.20min.ch${href}`;
 
         if (!seenUrls.has(fullUrl) && fullUrl.includes('/story/')) {

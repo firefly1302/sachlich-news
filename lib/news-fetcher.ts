@@ -5,7 +5,8 @@ import {
   scrapeWeltwocheHeadlines,
   scrapeNebelspalterHeadlines,
   scrape20MinHeadlines,
-  scrapeBlickHeadlines
+  scrapeBlickHeadlines,
+  shouldFilterArticle
 } from './web-scraper';
 
 const parser = new Parser();
@@ -41,7 +42,13 @@ export async function fetchNewsFromFeed(feed: NewsFeed): Promise<NewsArticle[]> 
       return dateB - dateA; // Neueste zuerst
     });
 
-    const articles: NewsArticle[] = sortedItems.slice(0, 10).map((item, index) => {
+    // Filtere belastende/irrelevante Artikel raus
+    const filteredItems = sortedItems.filter(item => {
+      const title = item.title || '';
+      return !shouldFilterArticle(title);
+    });
+
+    const articles: NewsArticle[] = filteredItems.slice(0, 10).map((item, index) => {
       const id = `${feed.category}-${Date.now()}-${index}`;
 
       return {
