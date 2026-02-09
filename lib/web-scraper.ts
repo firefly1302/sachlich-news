@@ -1,6 +1,6 @@
 import axios from 'axios';
 import * as cheerio from 'cheerio';
-import { NewsArticle } from './types';
+import { NewsArticle, NewsCategory } from './types';
 
 // 12ft.io Paywall-Umgehung
 async function bypassPaywall(url: string): Promise<string> {
@@ -329,7 +329,7 @@ export async function scrapeNebelspalterHeadlines(): Promise<NewsArticle[]> {
 }
 
 // 20 Minuten Homepage scrapen für Headlines
-export async function scrape20MinHeadlines(section: string, category: string): Promise<NewsArticle[]> {
+export async function scrape20MinHeadlines(section: string, category: NewsCategory): Promise<NewsArticle[]> {
   try {
     // 20min Kategorien-URLs
     const urls: Record<string, string> = {
