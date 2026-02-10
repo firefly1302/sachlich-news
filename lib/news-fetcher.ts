@@ -79,7 +79,11 @@ export async function fetchAllNews(): Promise<NewsArticle[]> {
   }
 
   // Sortiere nach Datum (neueste zuerst)
-  allArticles.sort((a, b) => b.publishedAt.getTime() - a.publishedAt.getTime());
+  allArticles.sort((a, b) => {
+    const dateA = typeof a.publishedAt === 'string' ? new Date(a.publishedAt) : a.publishedAt;
+    const dateB = typeof b.publishedAt === 'string' ? new Date(b.publishedAt) : b.publishedAt;
+    return dateB.getTime() - dateA.getTime();
+  });
 
   return allArticles;
 }
@@ -93,7 +97,11 @@ export async function fetchNewsByCategory(category: string): Promise<NewsArticle
     allArticles.push(...articles);
   }
 
-  allArticles.sort((a, b) => b.publishedAt.getTime() - a.publishedAt.getTime());
+  allArticles.sort((a, b) => {
+    const dateA = typeof a.publishedAt === 'string' ? new Date(a.publishedAt) : a.publishedAt;
+    const dateB = typeof b.publishedAt === 'string' ? new Date(b.publishedAt) : b.publishedAt;
+    return dateB.getTime() - dateA.getTime();
+  });
 
   return allArticles;
 }

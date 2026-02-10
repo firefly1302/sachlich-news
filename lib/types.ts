@@ -6,7 +6,7 @@ export interface NewsArticle {
   summary: string;
   category: NewsCategory;
   source: string;
-  publishedAt: Date;
+  publishedAt: Date | string;
   originalUrl: string;
   imageUrl?: string;
   fullContent?: string;

@@ -16,15 +16,8 @@ export default function NewsCard({ article }: NewsCardProps) {
     locale: de,
   });
 
-  const articleUrl = `/article/${encodeURIComponent(article.id)}?${new URLSearchParams({
-    title: article.title,
-    summary: article.summary,
-    source: article.source,
-    category: article.category,
-    publishedAt: article.publishedAt.toString(),
-    originalUrl: article.originalUrl,
-    ...(article.imageUrl && { imageUrl: article.imageUrl }),
-  }).toString()}`;
+  // Clean URL: /article/abc-123 (no query params)
+  const articleUrl = `/article/${encodeURIComponent(article.id)}`;
 
   return (
     <Link href={articleUrl}>

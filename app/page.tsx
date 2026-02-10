@@ -1,52 +1,66 @@
-'use client';
-
-import { useEffect, useState } from 'react';
 import NewsCard from './components/NewsCard';
 import { NewsArticle } from '@/lib/types';
+import { getCachedFeed, setCachedFeed, generateArticleId, ensureDateString } from '@/lib/cache';
+import { fetchAllNews } from '@/lib/news-fetcher';
+import { rewriteHeadlineAndSummary } from '@/lib/ai-rewriter';
+import { shouldFilterArticle } from '@/lib/web-scraper';
+import { getCachedHeadline, setCachedHeadline } from '@/lib/cache';
 
-export default function HomePage() {
-  const [articles, setArticles] = useState<NewsArticle[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+// ISR: Revalidate every 15 min
+export const revalidate = 900;
 
-  useEffect(() => {
-    async function loadNews() {
-      try {
-        setLoading(true);
-        const response = await fetch('/api/news');
-        if (!response.ok) throw new Error('Fehler beim Laden');
-        const data = await response.json();
-        setArticles(data.articles);
-      } catch (err) {
-        setError('Fehler beim Laden der Nachrichten');
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    }
+export default async function HomePage() {
+  // Server-side data fetching with caching
+  let articles = await getCachedFeed();
 
-    loadNews();
-  }, []);
+  if (!articles) {
+    // Cache miss - fetch fresh
+    console.log('🏠 Homepage: Cache miss - fetching fresh data');
+    const rawArticles = await fetchAllNews();
 
-  if (loading) {
-    return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-          <p className="mt-4 text-gray-600">Lade sachliche Nachrichten...</p>
-        </div>
-      </div>
+    // Filter BEFORE AI (cost optimization)
+    const filtered = rawArticles.filter(a => !shouldFilterArticle(a.title));
+
+    // Generate IDs and AI-rewrite with headline caching
+    articles = await Promise.all(
+      filtered.map(async (article) => {
+        const id = generateArticleId(article.originalUrl);
+
+        // Check headline cache
+        const cachedHeadline = await getCachedHeadline(article.title);
+        if (cachedHeadline) {
+          return {
+            ...article,
+            id,
+            title: cachedHeadline.title,
+            summary: cachedHeadline.summary,
+            publishedAt: ensureDateString(article.publishedAt),
+          };
+        }
+
+        // Not cached - rewrite and cache
+        const rewritten = await rewriteHeadlineAndSummary(
+          article.title,
+          article.summary
+        );
+
+        await setCachedHeadline(article.title, rewritten);
+
+        return {
+          ...article,
+          id,
+          title: rewritten.title,
+          summary: rewritten.summary,
+          publishedAt: ensureDateString(article.publishedAt),
+        };
+      })
     );
-  }
 
-  if (error) {
-    return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="text-center text-red-600">
-          <p>{error}</p>
-        </div>
-      </div>
-    );
+    // Filter AFTER AI (double check)
+    articles = articles.filter(a => !shouldFilterArticle(a.title));
+
+    // Cache for 15 min
+    await setCachedFeed(articles);
   }
 
   return (
