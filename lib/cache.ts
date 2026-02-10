@@ -1,11 +1,37 @@
-import { kv } from '@vercel/kv';
+import { Redis } from '@upstash/redis';
 import { NewsArticle } from './types';
+
+// Lazy Redis client initialization - only create when env vars are available
+let redis: Redis | null = null;
+
+function getRedis(): Redis | null {
+  if (redis) return redis;
+
+  // Check if Redis env vars are available (only on Vercel runtime, not during build)
+  if (process.env.REDIS_URL) {
+    redis = Redis.fromEnv(); // Automatically reads REDIS_URL
+    return redis;
+  } else if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
+    redis = new Redis({
+      url: process.env.UPSTASH_REDIS_REST_URL,
+      token: process.env.UPSTASH_REDIS_REST_TOKEN,
+    });
+    return redis;
+  }
+
+  // No Redis available (e.g., during build or local dev without .env)
+  console.warn('⚠️ Redis not configured - caching disabled');
+  return null;
+}
 
 // Feed caching (15 Min TTL)
 export async function getCachedFeed(category?: string): Promise<NewsArticle[] | null> {
+  const client = getRedis();
+  if (!client) return null; // Caching disabled
+
   try {
     const key = `feed:${category || 'all'}`;
-    const cached = await kv.get<NewsArticle[]>(key);
+    const cached = await client.get<NewsArticle[]>(key);
     return cached;
   } catch (error) {
     console.error('❌ Error getting cached feed:', error);
@@ -14,9 +40,12 @@ export async function getCachedFeed(category?: string): Promise<NewsArticle[] | 
 }
 
 export async function setCachedFeed(articles: NewsArticle[], category?: string): Promise<void> {
+  const client = getRedis();
+  if (!client) return; // Caching disabled
+
   try {
     const key = `feed:${category || 'all'}`;
-    await kv.set(key, articles, { ex: 900 }); // 15 Min TTL
+    await client.set(key, articles, { ex: 900 }); // 15 Min TTL
     console.log(`✅ Cached feed: ${key} (${articles.length} articles, 15 min TTL)`);
   } catch (error) {
     console.error('❌ Error setting cached feed:', error);
@@ -28,9 +57,12 @@ export async function getCachedArticle(id: string): Promise<{
   meta: NewsArticle | null;
   content: string | null;
 }> {
+  const client = getRedis();
+  if (!client) return { meta: null, content: null }; // Caching disabled
+
   try {
-    const meta = await kv.get<NewsArticle>(`article:${id}:meta`);
-    const content = await kv.get<string>(`article:${id}:content`);
+    const meta = await client.get<NewsArticle>(`article:${id}:meta`);
+    const content = await client.get<string>(`article:${id}:content`);
     return { meta, content };
   } catch (error) {
     console.error('❌ Error getting cached article:', error);
@@ -39,10 +71,13 @@ export async function getCachedArticle(id: string): Promise<{
 }
 
 export async function setCachedArticle(article: NewsArticle, content?: string): Promise<void> {
+  const client = getRedis();
+  if (!client) return; // Caching disabled
+
   try {
-    await kv.set(`article:${article.id}:meta`, article);
+    await client.set(`article:${article.id}:meta`, article);
     if (content) {
-      await kv.set(`article:${article.id}:content`, content);
+      await client.set(`article:${article.id}:content`, content);
       console.log(`✅ Cached article: ${article.id} (with content)`);
     } else {
       console.log(`✅ Cached article metadata: ${article.id}`);
@@ -57,9 +92,12 @@ export async function getCachedHeadline(originalTitle: string): Promise<{
   title: string;
   summary: string;
 } | null> {
+  const client = getRedis();
+  if (!client) return null; // Caching disabled
+
   try {
     const hash = createHash(originalTitle);
-    const cached = await kv.get<{ title: string; summary: string }>(`headline:${hash}`);
+    const cached = await client.get<{ title: string; summary: string }>(`headline:${hash}`);
     return cached;
   } catch (error) {
     console.error('❌ Error getting cached headline:', error);
@@ -71,9 +109,12 @@ export async function setCachedHeadline(
   originalTitle: string,
   rewritten: { title: string; summary: string }
 ): Promise<void> {
+  const client = getRedis();
+  if (!client) return; // Caching disabled
+
   try {
     const hash = createHash(originalTitle);
-    await kv.set(`headline:${hash}`, rewritten);
+    await client.set(`headline:${hash}`, rewritten);
     console.log(`✅ Cached headline: ${hash.substring(0, 8)}...`);
   } catch (error) {
     console.error('❌ Error setting cached headline:', error);
