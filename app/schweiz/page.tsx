@@ -1,10 +1,16 @@
 import NewsCard from '../components/NewsCard';
+import { Metadata } from 'next';
 import { NewsArticle } from '@/lib/types';
 import { getCachedFeed, setCachedFeed, generateArticleId, ensureDateString } from '@/lib/cache';
 import { fetchNewsByCategory } from '@/lib/news-fetcher';
 import { rewriteHeadlineAndSummary } from '@/lib/ai-rewriter';
 import { shouldFilterArticle } from '@/lib/web-scraper';
 import { getCachedHeadline, setCachedHeadline } from '@/lib/cache';
+
+export const metadata: Metadata = {
+  title: 'Schweiz News | Sachlich.News',
+  description: 'Nachrichten aus der Schweiz - sachlich aufbereitet ohne Drama und Sensationalismus.',
+};
 
 // ISR: Revalidate every 15 min
 export const revalidate = 900;

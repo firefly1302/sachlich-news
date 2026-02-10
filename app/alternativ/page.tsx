@@ -1,10 +1,16 @@
 import NewsCard from '../components/NewsCard';
+import { Metadata } from 'next';
 import { NewsArticle } from '@/lib/types';
 import { getCachedFeed, setCachedFeed, generateArticleId, ensureDateString } from '@/lib/cache';
 import { fetchNewsByCategory } from '@/lib/news-fetcher';
 import { rewriteHeadlineAndSummary } from '@/lib/ai-rewriter';
 import { shouldFilterArticle } from '@/lib/web-scraper';
 import { getCachedHeadline, setCachedHeadline } from '@/lib/cache';
+
+export const metadata: Metadata = {
+  title: 'Alternative Medien | Sachlich.News',
+  description: 'Unabhängige und kritische Perspektiven - sachlich aufbereitet ohne Drama und Sensationalismus.',
+};
 
 // ISR: Revalidate every 15 min
 export const revalidate = 900;

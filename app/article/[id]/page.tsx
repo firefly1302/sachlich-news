@@ -2,6 +2,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { de } from 'date-fns/locale';
 import Link from 'next/link';
 import Image from 'next/image';
+import { Metadata } from 'next';
 import { NewsArticle } from '@/lib/types';
 import { getCachedArticle, setCachedArticle } from '@/lib/cache';
 import { scrapeArticle } from '@/lib/web-scraper';
@@ -10,6 +11,55 @@ import { rewriteFullArticle } from '@/lib/ai-rewriter';
 interface Props {
   params: Promise<{ id: string }>;
   searchParams: Promise<Record<string, string | undefined>>;
+}
+
+export async function generateMetadata({ params, searchParams }: Props): Promise<Metadata> {
+  const { id } = await params;
+  const query = await searchParams;
+
+  // Try to get article from cache or query params
+  let { meta: article } = await getCachedArticle(id);
+
+  if (!article && query.title) {
+    article = {
+      id,
+      title: query.title,
+      summary: query.summary || '',
+      source: query.source || '',
+      category: query.category as any,
+      publishedAt: query.publishedAt || new Date().toISOString(),
+      originalUrl: query.originalUrl || '',
+      imageUrl: query.imageUrl || undefined,
+    };
+  }
+
+  if (!article) {
+    return {
+      title: 'Artikel nicht gefunden | Sachlich.News',
+      description: 'Der gesuchte Artikel konnte nicht gefunden werden.',
+    };
+  }
+
+  return {
+    title: `${article.title} | Sachlich.News`,
+    description: article.summary || 'Sachlich aufbereiteter Nachrichtenartikel ohne Drama und Sensationalismus.',
+    openGraph: {
+      title: article.title,
+      description: article.summary,
+      type: 'article',
+      publishedTime: typeof article.publishedAt === 'string'
+        ? article.publishedAt
+        : article.publishedAt.toISOString(),
+      authors: [article.source],
+      images: article.imageUrl ? [article.imageUrl] : [],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: article.title,
+      description: article.summary,
+      images: article.imageUrl ? [article.imageUrl] : [],
+    },
+  };
 }
 
 export default async function ArticlePage({ params, searchParams }: Props) {
