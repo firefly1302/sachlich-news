@@ -71,12 +71,31 @@ export async function fetchNewsFromFeed(feed: NewsFeed): Promise<NewsArticle[]> 
 }
 
 export async function fetchAllNews(): Promise<NewsArticle[]> {
-  const allArticles: NewsArticle[] = [];
+  console.log(`🚀 Fetching ${NEWS_FEEDS.length} feeds in PARALLEL...`);
+  const startTime = Date.now();
 
-  for (const feed of NEWS_FEEDS) {
-    const articles = await fetchNewsFromFeed(feed);
-    allArticles.push(...articles);
-  }
+  // PARALLEL fetching with Promise.allSettled (ein Fehler stoppt andere nicht)
+  const results = await Promise.allSettled(
+    NEWS_FEEDS.map(feed => fetchNewsFromFeed(feed))
+  );
+
+  // Sammle alle erfolgreichen Ergebnisse
+  const allArticles: NewsArticle[] = [];
+  let successCount = 0;
+  let failureCount = 0;
+
+  results.forEach((result, index) => {
+    if (result.status === 'fulfilled') {
+      allArticles.push(...result.value);
+      successCount++;
+    } else {
+      failureCount++;
+      console.error(`❌ Feed ${NEWS_FEEDS[index].name} failed:`, result.reason?.message || 'Unknown error');
+    }
+  });
+
+  const elapsed = ((Date.now() - startTime) / 1000).toFixed(2);
+  console.log(`✅ Parallel fetch completed in ${elapsed}s (${successCount} success, ${failureCount} failed)`);
 
   // Sortiere nach Datum (neueste zuerst)
   allArticles.sort((a, b) => {
@@ -90,12 +109,31 @@ export async function fetchAllNews(): Promise<NewsArticle[]> {
 
 export async function fetchNewsByCategory(category: string): Promise<NewsArticle[]> {
   const categoryFeeds = NEWS_FEEDS.filter(feed => feed.category === category);
-  const allArticles: NewsArticle[] = [];
+  console.log(`🚀 Fetching ${categoryFeeds.length} feeds for category '${category}' in PARALLEL...`);
+  const startTime = Date.now();
 
-  for (const feed of categoryFeeds) {
-    const articles = await fetchNewsFromFeed(feed);
-    allArticles.push(...articles);
-  }
+  // PARALLEL fetching with Promise.allSettled
+  const results = await Promise.allSettled(
+    categoryFeeds.map(feed => fetchNewsFromFeed(feed))
+  );
+
+  // Sammle alle erfolgreichen Ergebnisse
+  const allArticles: NewsArticle[] = [];
+  let successCount = 0;
+  let failureCount = 0;
+
+  results.forEach((result, index) => {
+    if (result.status === 'fulfilled') {
+      allArticles.push(...result.value);
+      successCount++;
+    } else {
+      failureCount++;
+      console.error(`❌ Feed ${categoryFeeds[index].name} failed:`, result.reason?.message || 'Unknown error');
+    }
+  });
+
+  const elapsed = ((Date.now() - startTime) / 1000).toFixed(2);
+  console.log(`✅ Parallel fetch completed in ${elapsed}s (${successCount} success, ${failureCount} failed)`);
 
   allArticles.sort((a, b) => {
     const dateA = typeof a.publishedAt === 'string' ? new Date(a.publishedAt) : a.publishedAt;
