@@ -2,13 +2,36 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 
 export default function Header() {
   const router = useRouter();
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
-  const handleRefresh = () => {
-    router.refresh();
-    window.location.reload();
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+
+    try {
+      // Schritt 1: Redis Cache leeren
+      const response = await fetch('/api/refresh-cache', {
+        method: 'POST',
+      });
+
+      if (response.ok) {
+        console.log('✅ Cache geleert, lade neue News...');
+
+        // Schritt 2: Seite neu laden (fetched frische Daten)
+        window.location.reload();
+      } else {
+        console.error('❌ Cache leeren fehlgeschlagen');
+        alert('Fehler beim Aktualisieren. Bitte versuche es erneut.');
+        setIsRefreshing(false);
+      }
+    } catch (error) {
+      console.error('❌ Fehler:', error);
+      alert('Fehler beim Aktualisieren. Bitte versuche es erneut.');
+      setIsRefreshing(false);
+    }
   };
 
   return (
@@ -21,8 +44,9 @@ export default function Header() {
           <div className="flex items-center gap-4">
             <button
               onClick={handleRefresh}
-              className="px-4 py-2 bg-blue-500 hover:bg-blue-400 rounded-lg font-medium transition-colors flex items-center gap-2"
-              title="News aktualisieren"
+              disabled={isRefreshing}
+              className="px-4 py-2 bg-blue-500 hover:bg-blue-400 disabled:bg-blue-300 disabled:cursor-not-allowed rounded-lg font-medium transition-colors flex items-center gap-2"
+              title="News aktualisieren (löscht Cache und lädt frische Artikel)"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -30,7 +54,7 @@ export default function Header() {
                 viewBox="0 0 24 24"
                 strokeWidth={2}
                 stroke="currentColor"
-                className="w-5 h-5"
+                className={`w-5 h-5 ${isRefreshing ? 'animate-spin' : ''}`}
               >
                 <path
                   strokeLinecap="round"
@@ -38,7 +62,9 @@ export default function Header() {
                   d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99"
                 />
               </svg>
-              <span className="hidden sm:inline">Aktualisieren</span>
+              <span className="hidden sm:inline">
+                {isRefreshing ? 'Lädt...' : 'Aktualisieren'}
+              </span>
             </button>
             <p className="text-blue-100 text-sm max-w-md hidden md:block">
               Nachrichten ohne Drama. Nur Fakten.
