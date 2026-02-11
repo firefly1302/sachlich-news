@@ -34,31 +34,38 @@ export default async function AlternativPage() {
 
         // Check headline cache
         const cachedHeadline = await getCachedHeadline(article.title);
+        let finalArticle: NewsArticle;
+
         if (cachedHeadline) {
-          return {
+          finalArticle = {
             ...article,
             id,
             title: cachedHeadline.title,
             summary: cachedHeadline.summary,
             publishedAt: ensureDateString(article.publishedAt),
           };
+        } else {
+          // Not cached - rewrite and cache
+          const rewritten = await rewriteHeadlineAndSummary(
+            article.title,
+            article.summary
+          );
+
+          await setCachedHeadline(article.title, rewritten);
+
+          finalArticle = {
+            ...article,
+            id,
+            title: rewritten.title,
+            summary: rewritten.summary,
+            publishedAt: ensureDateString(article.publishedAt),
+          };
         }
 
-        // Not cached - rewrite and cache
-        const rewritten = await rewriteHeadlineAndSummary(
-          article.title,
-          article.summary
-        );
+        // Cache article metadata so detail page can find it
+        await setCachedArticle(finalArticle);
 
-        await setCachedHeadline(article.title, rewritten);
-
-        return {
-          ...article,
-          id,
-          title: rewritten.title,
-          summary: rewritten.summary,
-          publishedAt: ensureDateString(article.publishedAt),
-        };
+        return finalArticle;
       })
     );
 
