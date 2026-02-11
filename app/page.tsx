@@ -6,8 +6,8 @@ import { rewriteHeadlineAndSummary } from '@/lib/ai-rewriter';
 import { shouldFilterArticle } from '@/lib/web-scraper';
 import { getCachedHeadline, setCachedHeadline } from '@/lib/cache';
 
-// ISR: Revalidate every 15 min
-export const revalidate = 900;
+// ISR disabled - only manual refresh via button
+export const revalidate = false;
 
 // Smart Mix: Durchmische Kategorien für bessere Vielfalt auf Homepage
 function smartMixCategories(articles: NewsArticle[]): NewsArticle[] {

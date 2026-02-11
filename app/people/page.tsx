@@ -12,8 +12,8 @@ export const metadata: Metadata = {
   description: 'Prominente und Unterhaltung - sachlich aufbereitet ohne Drama und Sensationalismus.',
 };
 
-// ISR: Revalidate every 15 min
-export const revalidate = 900;
+// ISR disabled - only manual refresh via button
+export const revalidate = false;
 
 export default async function PeoplePage() {
   // Server-side data fetching with caching
