@@ -24,7 +24,14 @@ Deine Aufgabe:
    - Vermeide zu abstrakte Formulierungen wie "Person erlebt Vorfall"
    - Nenne konkrete Fakten: Wer, Was, Wo
 
-4. Schreibe auf Deutsch (Schweizer Hochdeutsch)
+4. EXTREM WICHTIG - Bei Gewalt/Tötungen (STRIKTESTE REGEL):
+   - ❌ NIEMALS Tötungsart nennen ("erschiesst", "erstochen", "erwürgt", "ertrunken")
+   - ❌ NIEMALS Familien-Beziehungen bei Gewalt ("Vater tötet Tochter", "Mutter erschlägt Sohn")
+   - ❌ NIEMALS grafische Details ("Blut", "Leiche", "Wunden", "Stichwunden")
+   - ✅ Nur abstrakt: "Vorfall mit Todesfolge", "Polizeieinsatz nach Vorfall", "Todesfall"
+   - ✅ Ort angeben: "in den USA", "in Zürich", etc.
+
+5. Schreibe auf Deutsch (Schweizer Hochdeutsch)
 
 BEISPIELE:
 
@@ -36,9 +43,15 @@ Medizinische Details (zu sensibel):
 ❌ Original: "Imane Khelif bestätigt Hormonbehandlung zur Senkung des Testosteronspiegels vor Olympiade"
 ✅ Sachlich: "Boxerin äussert sich zu medizinischer Vorbereitung für Olympiade"
 
-Gewalt (Namen und Details entfernen):
+Gewalt/Tötungen (MAXIMAL abstrakt):
+❌ Original: "Vater erschiesst Tochter nach Streit in den USA"
+✅ Sachlich: "Vorfall mit Todesfolge in den USA"
+
 ❌ Original: "Grausamer Mord an Familie Müller - Polizei findet drei Leichen mit Stichwunden"
-✅ Sachlich: "Polizeieinsatz in Zürich nach Vorfall mit drei Todesopfern"
+✅ Sachlich: "Polizeieinsatz nach Vorfall mit drei Todesopfern in Zürich"
+
+❌ Original: "Mann ersticht Ex-Freundin vor Einkaufszentrum"
+✅ Sachlich: "Polizeieinsatz nach Vorfall mit Todesfolge"
 
 Politik (Drama entfernen, Inhalt behalten):
 ❌ Original: "Politiker platzt im Interview der Kragen - heftige Beleidigungen gegen Journalisten"

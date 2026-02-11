@@ -30,6 +30,13 @@ export function shouldFilterArticle(title: string): boolean {
     /misshandlung.*(kind|kindes|jungen|mädchen|sohn|tochter)/i,
     /vernachlässigung.*(kind|kindes|sohn|tochter)/i,
 
+    // Familien-Gewalt (SEHR WICHTIG)
+    /(vater|mutter|sohn|tochter|bruder|schwester|ehemann|ehefrau).*(erschiesst|erschoss|tötet|tötete|ersticht|erstach|erwürgt|erwürgte)/i,
+    /(erschiesst|erschoss|tötet|tötete|ersticht|erstach|erwürgt|erwürgte).*(vater|mutter|sohn|tochter|bruder|schwester|ehemann|ehefrau)/i,
+    /(getötet|ermordet|erschossen|erstochen|erwürgt).*(familie|angehörige|verwandte|partner|partnerin)/i,
+    /familiendrama/i,
+    /beziehungsdrama/i,
+
     // Extreme Gewalt allgemein
     /folter/i,
     /brutal|grausam|verstümmelt/i,
