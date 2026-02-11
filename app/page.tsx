@@ -9,6 +9,44 @@ import { getCachedHeadline, setCachedHeadline } from '@/lib/cache';
 // ISR: Revalidate every 15 min
 export const revalidate = 900;
 
+// Smart Mix: Durchmische Kategorien für bessere Vielfalt auf Homepage
+function smartMixCategories(articles: NewsArticle[]): NewsArticle[] {
+  // Gruppiere nach Kategorie
+  const byCategory: Record<string, NewsArticle[]> = {};
+
+  articles.forEach(article => {
+    if (!byCategory[article.category]) {
+      byCategory[article.category] = [];
+    }
+    byCategory[article.category].push(article);
+  });
+
+  // Sortiere jede Kategorie nach Datum (neueste zuerst)
+  Object.keys(byCategory).forEach(category => {
+    byCategory[category].sort((a, b) => {
+      const dateA = typeof a.publishedAt === 'string' ? new Date(a.publishedAt) : a.publishedAt;
+      const dateB = typeof b.publishedAt === 'string' ? new Date(b.publishedAt) : b.publishedAt;
+      return dateB.getTime() - dateA.getTime();
+    });
+  });
+
+  // Round-Robin: Nimm abwechselnd aus jeder Kategorie
+  const mixed: NewsArticle[] = [];
+  const categories = Object.keys(byCategory);
+  let maxLength = Math.max(...categories.map(cat => byCategory[cat].length));
+
+  for (let i = 0; i < maxLength; i++) {
+    for (const category of categories) {
+      if (byCategory[category][i]) {
+        mixed.push(byCategory[category][i]);
+      }
+    }
+  }
+
+  console.log(`🎨 Smart Mix: ${articles.length} Artikel aus ${categories.length} Kategorien durchmischt`);
+  return mixed;
+}
+
 export default async function HomePage() {
   // Server-side data fetching with caching
   let articles = await getCachedFeed();
@@ -59,9 +97,13 @@ export default async function HomePage() {
     // Filter AFTER AI (double check)
     articles = articles.filter(a => !shouldFilterArticle(a.title));
 
-    // Cache for 15 min
+    // Cache for 15 min (BEFORE mixing - cache stores chronological)
     await setCachedFeed(articles);
   }
+
+  // SMART MIX: Always apply to ensure good category distribution
+  // (Works for both fresh and cached articles)
+  articles = smartMixCategories(articles);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
