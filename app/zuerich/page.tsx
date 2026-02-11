@@ -1,7 +1,7 @@
 import NewsCard from '../components/NewsCard';
 import { Metadata } from 'next';
 import { NewsArticle } from '@/lib/types';
-import { getCachedFeed, setCachedFeed, generateArticleId, ensureDateString } from '@/lib/cache';
+import { getCachedFeed, setCachedFeed, generateArticleId, ensureDateString, setCachedArticle } from '@/lib/cache';
 import { fetchNewsByCategory } from '@/lib/news-fetcher';
 import { rewriteHeadlineAndSummary } from '@/lib/ai-rewriter';
 import { shouldFilterArticle } from '@/lib/web-scraper';
