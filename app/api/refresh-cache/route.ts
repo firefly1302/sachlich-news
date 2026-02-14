@@ -1,23 +1,5 @@
 import { NextResponse } from 'next/server';
-import { Redis } from '@upstash/redis';
-
-// Redis client mit lazy init
-function getRedis(): Redis | null {
-  if (!process.env.REDIS_URL && !process.env.UPSTASH_REDIS_REST_URL) {
-    return null;
-  }
-
-  if (process.env.REDIS_URL) {
-    return Redis.fromEnv();
-  } else if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
-    return new Redis({
-      url: process.env.UPSTASH_REDIS_REST_URL,
-      token: process.env.UPSTASH_REDIS_REST_TOKEN,
-    });
-  }
-
-  return null;
-}
+import { getRedis } from '@/lib/cache';
 
 export async function POST() {
   try {
@@ -30,18 +12,23 @@ export async function POST() {
       );
     }
 
-    // Lösche alle Feed-Caches (feed:all, feed:zuerich, etc.)
-    const keys = await redis.keys('feed:*');
+    // Bekannte Feed-Cache Keys gezielt löschen (statt KEYS-Befehl)
+    const feedKeys = [
+      'feed:all',
+      'feed:zuerich',
+      'feed:schweiz',
+      'feed:international',
+      'feed:people',
+      'feed:alternativ',
+    ];
 
-    if (keys.length > 0) {
-      await redis.del(...keys);
-      console.log(`🗑️ Cache geleert: ${keys.length} Feed-Caches gelöscht`);
-    }
+    const deleted = await redis.del(...feedKeys);
+    console.log(`🗑️ Cache geleert: ${deleted} Feed-Caches gelöscht`);
 
     return NextResponse.json({
       success: true,
-      message: `${keys.length} Feed-Caches gelöscht`,
-      cleared: keys,
+      message: `${deleted} Feed-Caches gelöscht`,
+      cleared: feedKeys,
     });
   } catch (error) {
     console.error('❌ Fehler beim Cache leeren:', error);

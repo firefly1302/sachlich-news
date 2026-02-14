@@ -4,7 +4,7 @@ import { NewsArticle } from './types';
 // Lazy Redis client initialization - only create when env vars are available
 let redis: Redis | null = null;
 
-function getRedis(): Redis | null {
+export function getRedis(): Redis | null {
   if (redis) return redis;
 
   // Check if Redis env vars are available (only on Vercel runtime, not during build)
